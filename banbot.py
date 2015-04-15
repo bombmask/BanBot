@@ -1,4 +1,5 @@
 from twitchtools import login, chat, utils
+import collections
 import socket
 import threading
 import time
@@ -46,7 +47,7 @@ class banObject(object):
 
         for msg in self.user.messages:
             try:
-                message_list += " (Banned at {})\n".format(self.banTimeBetween(last, msg.creation_time).strftime('%Y-%m-%d %H:%M:%S'))
+                message_list +=  ">> Banned/timedout at {}\n".format(self.banTimeBetween(last, msg.creation_time).strftime('%Y-%m-%d %H:%M:%S')) 
             except AttributeError:
                 pass
 
@@ -85,7 +86,7 @@ def BanBotRuntime(channel, message):
         BanBotRuntime.bans[target_user.name] = banObject(target_user)
 
     except AttributeError:
-        BanBotRuntime.bans = {}
+        BanBotRuntime.bans = collections.OrderedDict()
         BanBotRuntime.bans[target_user.name] = banObject(target_user)
 
     except Exception, e:
@@ -103,6 +104,7 @@ def BanBotRequest(channel, message):
 
     #Write User links
     gist += "## User Report Issued\n"
+    gist += "#{} total users banned "
 
     for user in BanBotRuntime.bans.values():
         gist += "- [{user}](#{user})\n".format(user = user.user.name)
@@ -123,7 +125,7 @@ def BanBotRequest(channel, message):
     }
 
     r = requests.post("https://api.github.com/gists", data=json.dumps(gistDict)).json()
-    channel.sendMessage(r["html_url"] + " " + "@" + message.user)
+    channel.pm(r["html_url"] + " " + "@" + message.user)
 
     p(r["url"])
     
@@ -168,16 +170,32 @@ class cleanReport(utils.Operator):
 
     def execute(self, *args):
         channel, message = args
-        BanBotRuntime.bans = {}
-        channel.sendMessage("Cleaned bans list... Starting fresh @{} (local time)".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M::%S')))
+        BanBotRuntime.bans = collections.OrderedDict()
+        channel.pm("Cleaned bans list... Starting fresh @{} (local time)".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M::%S')))
 
+
+class GeneralMessageOp(utils.Operator):
+
+    def __init__(self):
+        self.callTimes = 0
+        self.p = utils.Printer("GeneralMessage")
+
+    @classmethod
+    def poll(self, *args):
+        return (args[1].command == "PRIVMSG")
+
+    def execute(self, *args):
+        channel, message = args
+        self.callTimes += 1
+        self.p.addSpecial(channel.name)
+        self.p("instance called", self.callTimes)
 
 
 p = utils.Printer("MAINLOOP")
 with chat.IRC(twitchlink, login.Profile("themaskoftruth")) as twitch:
     twitch.capibilities("tags")
     twitch.capibilities("commands")
-    twitch.join("bomb_mask")
+    twitch.join("bomb_mask, snarfybobo")
     twitch.register(banbot)
     twitch.register(banBotReporter)
     twitch.register(cleanReport)
@@ -187,11 +205,11 @@ with chat.IRC(twitchlink, login.Profile("themaskoftruth")) as twitch:
         if i.command == "PRIVMSG":
 
             if i.message == "QUIT" and i.user in SUPER_USERS:
-                twitch.channels["bomb_mask"].sendMessage("Exiting...")
+                twitch.channels["bomb_mask"].pm("Exiting...")
                 break
                 
             # if i.message.startswith(":"):
-            #     twitch.channels["bomb_mask"].sendMessage(i.message+" "+i.user)
+            #     twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
             #     #p("<Sending>", i.message)
                 
 
