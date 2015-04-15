@@ -21,7 +21,7 @@ utils.Printer.level = "DEBUG"
 
 
 class banObject(object):
-    
+
     def __init__(self, t_user):
         self.id = t_user.name
         self.user = t_user
@@ -42,12 +42,12 @@ class banObject(object):
     def toMarkdown(self):
         self.p("TO MARKDOWN CALLED")
         message_list = ""
-        
+
         last = datetime.datetime.now()
 
         for msg in self.user.messages:
             try:
-                message_list +=  ">> Banned/timedout at {}\n".format(self.banTimeBetween(last, msg.creation_time).strftime('%Y-%m-%d %H:%M:%S')) 
+                message_list +=  ">> Banned/timedout at {}\n".format(self.banTimeBetween(last, msg.creation_time).strftime('%Y-%m-%d %H:%M:%S'))
             except AttributeError:
                 pass
 
@@ -75,9 +75,8 @@ def BanBotRuntime(channel, message):
 
     p = utils.Printer("BanBotRuntime")
 
-    
     target_user = channel.users[message.target]
-    
+
     try:
 
         BanBotRuntime.bans[target_user.name].append()
@@ -100,11 +99,10 @@ def BanBotRequest(channel, message):
     gist = ""
     #write Header
     gist += "# {}\n".format(bb_info["header"])
-    gist += "Ban Report Generated at [{}]\n".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M::%S'))
+    gist += "Ban Report Generated at [{}]\n".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     #Write User links
-    gist += "## User Report Issued\n"
-    gist += "#{} total users banned "
+    gist += "## User Report Issued - {} total users banned\n".format(sum(1 for item in BanBotRuntime.bans.values()))
 
     for user in BanBotRuntime.bans.values():
         gist += "- [{user}](#{user})\n".format(user = user.user.name)
@@ -114,10 +112,10 @@ def BanBotRequest(channel, message):
     #Write User header - message
     for ban in BanBotRuntime.bans.values():
         gist += ban.toMarkdown()
-    
-    
 
-    #Github gist 
+
+
+    #Github gist
     gistDict = {
         "files": {"bans.md": {"content" : gist}},
         "description": "{}".format("automated ban report created at "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M::%S')),
@@ -128,7 +126,7 @@ def BanBotRequest(channel, message):
     channel.pm(r["html_url"] + " " + "@" + message.user)
 
     p(r["url"])
-    
+
 
 
 class banbot(utils.Operator):
@@ -207,11 +205,11 @@ with chat.IRC(twitchlink, login.Profile("themaskoftruth")) as twitch:
             if i.message == "QUIT" and i.user in SUPER_USERS:
                 twitch.channels["bomb_mask"].pm("Exiting...")
                 break
-                
+
             # if i.message.startswith(":"):
             #     twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
             #     #p("<Sending>", i.message)
-                
+
 
         if i.command == "CLEARCHAT":
             p(i.message, i.raw)
