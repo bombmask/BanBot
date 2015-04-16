@@ -1,3 +1,4 @@
 [submodule "twitchtools"]
 	path = twitchtools
 	url = https://github.com/bombmask/twitchtools.git
+	branch = master

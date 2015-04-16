@@ -70,59 +70,6 @@ class banObject(object):
 
         return ""
 
-# def BanBotRuntime(channel, message):
-
-    
-
-#     target_user = channel.users[message.target]
-
-#     try:
-
-#         BanBotRuntime.bans[target_user.name].append()
-
-#     except KeyError:
-#         BanBotRuntime.bans[target_user.name] = banObject(target_user)
-
-#     except AttributeError:
-#         BanBotRuntime.bans = collections.OrderedDict()
-#         BanBotRuntime.bans[target_user.name] = banObject(target_user)
-
-#     except Exception, e:
-#         p(e)
-# def BanBotRequest(channel, message):
-#     p = utils.Printer("BanBot.report")
-
-#     #File Generation
-#     gist = ""
-#     #write Header
-#     gist += "# {}\n".format(bb_info["header"])
-#     gist += "Ban Report Generated at [{}]\n".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-#     #Write User links
-#     gist += "## User Report Issued - {} total users banned\n".format(sum(1 for item in BanBotRuntime.bans.values()))
-
-#     for user in BanBotRuntime.bans.values():
-#         gist += "- [{user}](#{user})\n".format(user = user.user.name)
-
-#     gist += "\n"
-
-#     #Write User header - message
-#     for ban in BanBotRuntime.bans.values():
-#         gist += ban.toMarkdown()
-
-
-
-#     #Github gist
-#     gistDict = {
-#         "files": {"bans.md": {"content" : gist}},
-#         "description": "{}".format("automated ban report created at "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M::%S')),
-#         "public": True
-#     }
-
-#     r = requests.post("https://api.github.com/gists", data=json.dumps(gistDict)).json()
-#     channel.pm(r["html_url"] + " " + "@" + message.user)
-
-#     p(r["url"])
 
 class banbot(utils.Operator):
     def __init__(self):
