@@ -8,6 +8,7 @@ import requests
 import webbrowser
 import json
 
+###########             CONFIG                ###########
 twitchlink = ("irc.twitch.tv",6667)
 
 bb_info = {"header":"BanBot Distro TheMaskOfTruthv1"}
@@ -16,9 +17,7 @@ SUPER_USERS = ["bomb_mask", "batedurgonnadie"]
 
 utils.Printer.ON = True
 utils.Printer.level = "DEBUG"
-
-
-
+###########              END                  ###########
 
 class banObject(object):
 
@@ -40,7 +39,7 @@ class banObject(object):
         return "BanObject of [{}]".format(self.user.name)
 
     def toMarkdown(self):
-        self.p("TO MARKDOWN CALLED")
+        #self.p("TO MARKDOWN CALLED")
         message_list = ""
 
         last = datetime.datetime.now()
@@ -71,146 +70,170 @@ class banObject(object):
 
         return ""
 
-def BanBotRuntime(channel, message):
+# def BanBotRuntime(channel, message):
 
-    p = utils.Printer("BanBotRuntime")
+    
 
-    target_user = channel.users[message.target]
+#     target_user = channel.users[message.target]
 
-    try:
+#     try:
 
-        BanBotRuntime.bans[target_user.name].append()
+#         BanBotRuntime.bans[target_user.name].append()
 
-    except KeyError:
-        BanBotRuntime.bans[target_user.name] = banObject(target_user)
+#     except KeyError:
+#         BanBotRuntime.bans[target_user.name] = banObject(target_user)
 
-    except AttributeError:
-        BanBotRuntime.bans = collections.OrderedDict()
-        BanBotRuntime.bans[target_user.name] = banObject(target_user)
+#     except AttributeError:
+#         BanBotRuntime.bans = collections.OrderedDict()
+#         BanBotRuntime.bans[target_user.name] = banObject(target_user)
 
-    except Exception, e:
-        p(e)
+#     except Exception, e:
+#         p(e)
+# def BanBotRequest(channel, message):
+#     p = utils.Printer("BanBot.report")
 
+#     #File Generation
+#     gist = ""
+#     #write Header
+#     gist += "# {}\n".format(bb_info["header"])
+#     gist += "Ban Report Generated at [{}]\n".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-def BanBotRequest(channel, message):
-    p = utils.Printer("BanBot.report")
+#     #Write User links
+#     gist += "## User Report Issued - {} total users banned\n".format(sum(1 for item in BanBotRuntime.bans.values()))
 
-    #File Generation
-    gist = ""
-    #write Header
-    gist += "# {}\n".format(bb_info["header"])
-    gist += "Ban Report Generated at [{}]\n".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+#     for user in BanBotRuntime.bans.values():
+#         gist += "- [{user}](#{user})\n".format(user = user.user.name)
 
-    #Write User links
-    gist += "## User Report Issued - {} total users banned\n".format(sum(1 for item in BanBotRuntime.bans.values()))
+#     gist += "\n"
 
-    for user in BanBotRuntime.bans.values():
-        gist += "- [{user}](#{user})\n".format(user = user.user.name)
-
-    gist += "\n"
-
-    #Write User header - message
-    for ban in BanBotRuntime.bans.values():
-        gist += ban.toMarkdown()
+#     #Write User header - message
+#     for ban in BanBotRuntime.bans.values():
+#         gist += ban.toMarkdown()
 
 
 
-    #Github gist
-    gistDict = {
-        "files": {"bans.md": {"content" : gist}},
-        "description": "{}".format("automated ban report created at "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M::%S')),
-        "public": True
-    }
+#     #Github gist
+#     gistDict = {
+#         "files": {"bans.md": {"content" : gist}},
+#         "description": "{}".format("automated ban report created at "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M::%S')),
+#         "public": True
+#     }
 
-    r = requests.post("https://api.github.com/gists", data=json.dumps(gistDict)).json()
-    channel.pm(r["html_url"] + " " + "@" + message.user)
+#     r = requests.post("https://api.github.com/gists", data=json.dumps(gistDict)).json()
+#     channel.pm(r["html_url"] + " " + "@" + message.user)
 
-    p(r["url"])
-
-
+#     p(r["url"])
 
 class banbot(utils.Operator):
+    def __init__(self):
+        self.p = utils.Printer("BanBotRuntime")
+        self.bans = collections.OrderedDict()
+
     @classmethod
     def poll(self, *args):
         return args[1].command == "CLEARCHAT" or (args[1].message == ":clear" and args[1].user in SUPER_USERS)
 
     def execute(self, *args):
-        BanBotRuntime(*args)
+        #BanBotRuntime(*args)
+        channel, message = args
+        target_user = channel.users[message.target]
+
+        try:
+            self.bans[target_user.name].append()
+
+        except KeyError:
+            self.bans[target_user.name] = banObject(target_user)
 
 class banBotReporter(utils.Operator):
+    def __init__(self):
+        self.p = utils.Printer("BanBot.report")
+
     @classmethod
     def poll(self, *args):
-        return (args[1].command == "PRIVMSG" and args[1].message.startswith(":markdown") and hasattr(BanBotRuntime, "bans") and args[1].user == (args[0].owner))
-
-    @classmethod
-    def reason(self, *args):
-        reasons = set()
-        if args[1].command == "PRIVMSG":
-            reasons.add("Command is not PRIVMSG")
-
-        if args[1].message.startswith(":markdown"):
-            reasons.add("Message does not start with :markdown")
-
-        if hasattr(BanBotRuntime, "bans"):
-            reasons.add("Function(Channel) does not have any bans")
-
-        return reasons
-
-
+        return (args[1].command == "PRIVMSG" and args[1].message.startswith(":markdown") and hasattr(args[0].OperatorInstances[banbot], "bans") and args[1].user == (args[0].owner))
 
     def execute(self, *args):
-        BanBotRequest(*args)
+        #BanBotRequest(*args)
+            #File Generation
+        channel, message = args
+
+        gist = ""
+        #write Header
+        gist += "# {}\n".format(bb_info["header"])
+        gist += "Ban Report Generated at [{}]\n".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+        #Write User links
+        gist += "## User Report Issued - {} total users banned\n".format(sum(1 for item in channel.OperatorInstances[banbot].bans.values()))
+
+        for user in channel.OperatorInstances[banbot].bans.values():
+            gist += "- [{user}](#{user})\n".format(user = user.user.name)
+
+        gist += "\n"
+
+        #Write User header - message
+        for ban in channel.OperatorInstances[banbot].bans.values():
+            gist += ban.toMarkdown()
+
+
+
+        #Github gist
+        gistDict = {
+            "files": {"bans.md": {"content" : gist}},
+            "description": "{}".format("automated ban report created at "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+            "public": True
+        }
+
+        r = requests.post("https://api.github.com/gists", data=json.dumps(gistDict)).json()
+        channel.pm(r["html_url"] + " " + "@" + message.user)
+
+        self.p(r["url"])
 
 class cleanReport(utils.Operator):
     @classmethod
     def poll(self, *args):
-        return (args[1].command == "PRIVMSG" and args[1].message.startswith(":clean") and hasattr(BanBotRuntime, "bans") and args[1].user == (args[0].owner))
+        return (args[1].command == "PRIVMSG" and args[1].message.startswith(":clean") and hasattr(arg[0].OperatorInstances[banbot], "bans") and args[1].user == (args[0].owner))
 
     def execute(self, *args):
         channel, message = args
-        BanBotRuntime.bans = collections.OrderedDict()
-        channel.pm("Cleaned bans list... Starting fresh @{} (local time)".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M::%S')))
+        channel.OperatorInstances[banbot].bans = collections.OrderedDict()
+        channel.pm("Cleaned bans list... Starting fresh @{} (local time)".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-
-class GeneralMessageOp(utils.Operator):
+class ExposeOp(utils.Operator):
 
     def __init__(self):
-        self.callTimes = 0
         self.p = utils.Printer("GeneralMessage")
 
     @classmethod
     def poll(self, *args):
-        return (args[1].command == "PRIVMSG")
+        return (args[1].command == "PRIVMSG" and args[1].user in SUPER_USERS and args[1].message.startswith("-expose"))
 
     def execute(self, *args):
         channel, message = args
-        self.callTimes += 1
-        self.p.addSpecial(channel.name)
-        self.p("instance called", self.callTimes)
+        channel.pm("Hi everyone o/ ")        
+
+if __name__ == '__main__':
+        
+    p = utils.Printer("MAINLOOP")
+    with chat.IRC(twitchlink, login.Profile("themaskoftruth")) as twitch:
+        twitch.capibilities("tags")
+        twitch.capibilities("commands")
+        twitch.join("bomb_mask")
+        twitch.register(banbot)
+        twitch.register(banBotReporter)
+        twitch.register(cleanReport)
+        twitch.register(ExposeOp)
+
+        for i in twitch.readfile():
+            if i.command == "PRIVMSG":
+
+                if i.message == "QUIT" and i.user in SUPER_USERS:
+                    twitch.channels["bomb_mask"].pm("Exiting...")
+                    break
+
+                # if i.message.startswith(":"):
+                #     twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
+                #     #p("<Sending>", i.message)
 
 
-p = utils.Printer("MAINLOOP")
-with chat.IRC(twitchlink, login.Profile("themaskoftruth")) as twitch:
-    twitch.capibilities("tags")
-    twitch.capibilities("commands")
-    twitch.join("bomb_mask, snarfybobo")
-    twitch.register(banbot)
-    twitch.register(banBotReporter)
-    twitch.register(cleanReport)
-
-
-    for i in twitch.readfile():
-        if i.command == "PRIVMSG":
-
-            if i.message == "QUIT" and i.user in SUPER_USERS:
-                twitch.channels["bomb_mask"].pm("Exiting...")
-                break
-
-            # if i.message.startswith(":"):
-            #     twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
-            #     #p("<Sending>", i.message)
-
-
-        if i.command == "CLEARCHAT":
-            p(i.message, i.raw)
-
+            if i.command == "CLEARCHAT":
+                p(i.message, i.raw)
