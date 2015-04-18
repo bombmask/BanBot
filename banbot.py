@@ -46,7 +46,7 @@ class banObject(object):
 
         for msg in self.user.messages:
             try:
-                message_list +=  ">> Banned/timedout at {}\n".format(self.banTimeBetween(last, msg.creation_time).strftime('%Y-%m-%d %H:%M:%S'))
+                message_list +=  " >> Banned/timedout at {}\n".format(self.banTimeBetween(last, msg.creation_time).strftime('%Y-%m-%d %H:%M:%S'))
             except AttributeError:
                 pass
 
@@ -71,14 +71,20 @@ class banObject(object):
         return ""
 
 
-class banbot(utils.Operator):
+class BanOp(utils.Operator):
     def __init__(self):
         self.p = utils.Printer("BanBotRuntime")
         self.bans = collections.OrderedDict()
 
     @classmethod
-    def poll(self, *args):
-        return args[1].command == "CLEARCHAT" or (args[1].message == ":clear" and args[1].user in SUPER_USERS)
+    def poll(cls, *args):
+        return (
+            args[1].command == "CLEARCHAT" or 
+            (
+                args[1].message == ":clear" and
+                args[1].user in SUPER_USERS
+            )
+        )
 
     def execute(self, *args):
         #BanBotRuntime(*args)
@@ -91,37 +97,64 @@ class banbot(utils.Operator):
         except KeyError:
             self.bans[target_user.name] = banObject(target_user)
 
-class banBotReporter(utils.Operator):
+class ReportOp(utils.Operator):
     def __init__(self):
         self.p = utils.Printer("BanBot.report")
 
     @classmethod
-    def poll(self, *args):
-        return (args[1].command == "PRIVMSG" and args[1].message.startswith(":markdown") and hasattr(args[0].OperatorInstances[banbot], "bans") and args[1].user == (args[0].owner))
+    def poll(cls, *args):
+        return (
+            args[1].command == "PRIVMSG" and 
+            args[1].message.startswith(":markdown") and 
+            (   
+                args[1].user == (args[0].owner) or
+                args[1].user in SUPER_USERS or
+                ( args[1].tags.get("user_type", "") == "mod" )
+            )
+        )
 
     def execute(self, *args):
         #BanBotRequest(*args)
             #File Generation
         channel, message = args
-
-        gist = ""
-        #write Header
-        gist += "# {}\n".format(bb_info["header"])
-        gist += "Ban Report Generated at [{}]\n".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-        #Write User links
-        gist += "## User Report Issued - {} total users banned\n".format(sum(1 for item in channel.OperatorInstances[banbot].bans.values()))
-
-        for user in channel.OperatorInstances[banbot].bans.values():
-            gist += "- [{user}](#{user})\n".format(user = user.user.name)
-
-        gist += "\n"
-
-        #Write User header - message
-        for ban in channel.OperatorInstances[banbot].bans.values():
-            gist += ban.toMarkdown()
+            
+        param = message.message.split(' ')
+        if len(param) > 1 and message.user in SUPER_USERS:
+            channel_to = channel
+            try:
+                channel = channel.ircParent.channels[param[1]]
+            except KeyError:
+                self.p("Channel {} does not exist".format(param[1]))
+                return None
 
 
+        
+        UserLists = {
+            "Links":[],
+            "Markdown":[]
+        }
+        #Generate Lists of users from ban
+        for BanObject in channel.OperatorInstances[BanOp].bans.values():
+            UserLists["Links"].append("- [{user}](#{user})\n".format(user=BanObject.user.name))
+            UserLists["Markdown"].append(BanObject.toMarkdown())
+
+        #Template string for gist and markdown
+        gist = """
+# {header}
+Ban Report Generated at [{time}]
+
+## User Report Issued - {amount} Total Users Banned
+{UserLinkList}
+
+{UserMarkdownList}
+
+        """.format(
+            header=bb_info["header"], 
+            time=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            amount=len(channel.OperatorInstances[BanOp].bans),
+            UserLinkList="".join(UserLists["Links"]),
+            UserMarkdownList="".join(UserLists["Markdown"])
+        )
 
         #Github gist
         gistDict = {
@@ -129,34 +162,43 @@ class banBotReporter(utils.Operator):
             "description": "{}".format("automated ban report created at "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
             "public": True
         }
-
+        #Post to github
         r = requests.post("https://api.github.com/gists", data=json.dumps(gistDict)).json()
-        channel.pm(r["html_url"] + " " + "@" + message.user)
+
+        if len(param) > 1 and message.user in SUPER_USERS:
+            channel_to.pm(r["html_url"] + " " + "@" + message.user)
+        else:
+            channel.pm(r["html_url"] + " " + "@" + message.user)
 
         self.p(r["url"])
 
-class cleanReport(utils.Operator):
+class CleanOp(utils.Operator):
     @classmethod
-    def poll(self, *args):
-        return (args[1].command == "PRIVMSG" and args[1].message.startswith(":clean") and hasattr(arg[0].OperatorInstances[banbot], "bans") and args[1].user == (args[0].owner))
+    def poll(cls, *args):
+        return (
+            args[1].command == "PRIVMSG" and 
+            args[1].message.startswith(":clean") and 
+            hasattr(arg[0].OperatorInstances[BanOp], "bans") and 
+            args[1].user == (args[0].owner)
+        )
 
     def execute(self, *args):
         channel, message = args
-        channel.OperatorInstances[banbot].bans = collections.OrderedDict()
+        channel.OperatorInstances[BanOp].bans = collections.OrderedDict()
         channel.pm("Cleaned bans list... Starting fresh @{} (local time)".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-class ExposeOp(utils.Operator):
+class AboutOp(utils.Operator):
 
     def __init__(self):
         self.p = utils.Printer("GeneralMessage")
 
     @classmethod
     def poll(self, *args):
-        return (args[1].command == "PRIVMSG" and args[1].user in SUPER_USERS and args[1].message.startswith("-expose"))
+        return (args[1].command == "PRIVMSG" and args[1].user in SUPER_USERS and args[1].message.startswith("-about"))
 
     def execute(self, *args):
         channel, message = args
-        channel.pm("Hi everyone o/ ")        
+        channel.pm("Twitch chat ban managment bot created by bomb_mask (implcit copyright)")        
 
 if __name__ == '__main__':
         
@@ -164,13 +206,17 @@ if __name__ == '__main__':
     with chat.IRC(twitchlink, login.Profile("themaskoftruth")) as twitch:
         twitch.capibilities("tags")
         twitch.capibilities("commands")
-        twitch.join("bomb_mask")
-        twitch.register(banbot)
-        twitch.register(banBotReporter)
-        twitch.register(cleanReport)
-        twitch.register(ExposeOp)
+        
+        with open("channels.txt") as fin:
+            twitch.join(fin.read().strip())
+
+        twitch.register(BanOp)
+        twitch.register(ReportOp)
+        twitch.register(CleanOp)
+        twitch.register(AboutOp)
 
         for i in twitch.readfile():
+            #p(i.raw,'\n')
             if i.command == "PRIVMSG":
 
                 if i.message == "QUIT" and i.user in SUPER_USERS:
