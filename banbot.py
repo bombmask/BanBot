@@ -9,9 +9,9 @@ import webbrowser
 import json
 
 ###########             CONFIG                ###########
-twitchlink = ("irc.twitch.tv",6667)
+twitchlink = ("irc.twitch.tv", 6667)
 
-bb_info = {"header":"BanBot Distro TheMaskOfTruthv1"}
+bb_info = {"header": "BanBot Distro TheMaskOfTruthv1"}
 
 SUPER_USERS = ["bomb_mask", "batedurgonnadie"]
 
@@ -117,7 +117,7 @@ class ReportOp(utils.Operator):
         #BanBotRequest(*args)
             #File Generation
         channel, message = args
-            
+
         param = message.message.split(' ')
         if len(param) > 1 and message.user in SUPER_USERS:
             channel_to = channel
@@ -127,11 +127,9 @@ class ReportOp(utils.Operator):
                 self.p("Channel {} does not exist".format(param[1]))
                 return None
 
-
-        
         UserLists = {
-            "Links":[],
-            "Markdown":[]
+            "Links": [],
+            "Markdown": []
         }
         #Generate Lists of users from ban
         for BanObject in channel.OperatorInstances[BanOp].bans.values():
@@ -158,7 +156,7 @@ Ban Report Generated at [{time}]
 
         #Github gist
         gistDict = {
-            "files": {"bans.md": {"content" : gist}},
+            "files": {"bans.md": {"content": gist}},
             "description": "{}".format("automated ban report created at "+datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
             "public": True
         }
@@ -172,13 +170,14 @@ Ban Report Generated at [{time}]
 
         self.p(r["url"])
 
+
 class CleanOp(utils.Operator):
     @classmethod
     def poll(cls, *args):
         return (
-            args[1].command == "PRIVMSG" and 
-            args[1].message.startswith(":clean") and 
-            hasattr(arg[0].OperatorInstances[BanOp], "bans") and 
+            args[1].command == "PRIVMSG" and
+            args[1].message.startswith(":clean") and
+            hasattr(args[0].OperatorInstances[BanOp], "bans") and
             args[1].user == (args[0].owner)
         )
 
@@ -187,7 +186,9 @@ class CleanOp(utils.Operator):
         channel.OperatorInstances[BanOp].bans = collections.OrderedDict()
         channel.pm("Cleaned bans list... Starting fresh @{} (local time)".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
+
 class AboutOp(utils.Operator):
+    """"""
 
     def __init__(self):
         self.p = utils.Printer("GeneralMessage")
@@ -198,15 +199,15 @@ class AboutOp(utils.Operator):
 
     def execute(self, *args):
         channel, message = args
-        channel.pm("Twitch chat ban managment bot created by bomb_mask (implcit copyright)")        
+        channel.pm("Twitch chat ban managment bot created by bomb_mask ")       
 
 if __name__ == '__main__':
-        
+
     p = utils.Printer("MAINLOOP")
     with chat.IRC(twitchlink, login.Profile("themaskoftruth")) as twitch:
         twitch.capibilities("tags")
         twitch.capibilities("commands")
-        
+
         with open("channels.txt") as fin:
             twitch.join(fin.read().strip())
 
