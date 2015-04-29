@@ -201,6 +201,38 @@ class AboutOp(utils.Operator):
         channel, message = args
         channel.pm("Twitch chat ban managment bot created by bomb_mask ")       
 
+class JoinCommand(utils.Operator):
+    @classmethod
+    def poll(cls, *args):
+        return (
+            args[1].command == "PRIVMSG" and
+            args[1].message.startswith("!join ") and
+            args[1].tags["display-name"].lower() in SUPER_USERS
+        )
+
+    def execute(self, *args):
+        channel, message = args
+        newChannel = message.message.split(" ")[1]
+
+        channel.ircParent.join(newChannel)
+        print "Joined :", newChannel
+
+class LeaveCommand(utils.Operator):
+    @classmethod
+    def poll(cls, *args):
+        return (
+            args[1].command == "PRIVMSG" and
+            args[1].message.startswith("!leave ") and
+            args[1].tags["display-name"].lower() in SUPER_USERS
+        )
+
+    def execute(self, *args):
+        channel, message = args
+        newChannel = message.message.split(" ")[1]
+
+        channel.ircParent.part(newChannel)
+        print "Left :", newChannel
+
 if __name__ == '__main__':
 
     p = utils.Printer("MAINLOOP")
@@ -215,12 +247,14 @@ if __name__ == '__main__':
         twitch.register(ReportOp)
         twitch.register(CleanOp)
         twitch.register(AboutOp)
+        twitch.register(LeaveCommand)
+        twitch.register(JoinCommand)
 
         for i in twitch.readfile():
             #p(i.raw,'\n')
             if i.command == "PRIVMSG":
 
-                if i.message == "QUIT" and i.user in SUPER_USERS:
+                if i.message == "->QUIT" and i.user in SUPER_USERS:
                     twitch.channels["bomb_mask"].pm("Exiting...")
                     break
 
