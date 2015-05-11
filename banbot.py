@@ -19,6 +19,29 @@ utils.Printer.ON = True
 utils.Printer.level = "DEBUG"
 ###########              END                  ###########
 
+def constructJSON(IRC, Channel=None):
+    JsonDict = {}
+    #If Channel is named
+    if Channel:
+        Ob = IRC.channels.get(Channel, False)
+
+        if Ob:
+            with open('JSON.json','w') as fout:
+                if not Ob.OperatorInstances.get(BanOp, False):
+                    return None
+
+                for BanOb in Ob.OperatorInstances[BanOp].bans.values():
+                    json.dump({'#'+Channel:BanOb.toJSON()}, fout, default=str, indent=4)
+
+    else:
+        with open('JSON.json','w') as fout:
+            for Channel in IRC.channels.items():
+                if not Channel[1].OperatorInstances.get(BanOp, False):
+                    continue
+
+                for BanOb in Channel[1].OperatorInstances[BanOp].bans.values():
+                    json.dump({'#'+Channel[0]:BanOb.toJSON()}, fout, default=str, indent=4)
+
 class banObject(object):
 
     def __init__(self, t_user):
@@ -37,6 +60,12 @@ class banObject(object):
 
     def __repr__(self):
         return "BanObject of [{}]".format(self.user.name)
+
+    def toJSON(self):
+        JSONDICT = {}
+        JSONDICT["Messages"] = [{"tags":Message.tags, "message":Message.message, "time":Message.creation_time.isoformat()} for Message in self.user.messages]
+        JSONDICT["Clears"] = [C.isoformat() for C in self.ban_times]
+        return {self.user.name:JSONDICT}
 
     def toMarkdown(self):
         #self.p("TO MARKDOWN CALLED")
@@ -69,7 +98,6 @@ class banObject(object):
                 return i
 
         return ""
-
 
 class BanOp(utils.Operator):
     def __init__(self):
@@ -138,13 +166,13 @@ class ReportOp(utils.Operator):
 
         #Template string for gist and markdown
         gist = """
-# {header}
-Ban Report Generated at [{time}]
+    # {header}
+    Ban Report Generated at [{time}]
 
-## User Report Issued - {amount} Total Users Banned
-{UserLinkList}
+    ## User Report Issued - {amount} Total Users Banned
+    {UserLinkList}
 
-{UserMarkdownList}
+    {UserMarkdownList}
 
         """.format(
             header=bb_info["header"], 
@@ -170,7 +198,6 @@ Ban Report Generated at [{time}]
 
         self.p(r["url"])
 
-
 class CleanOp(utils.Operator):
     @classmethod
     def poll(cls, *args):
@@ -185,7 +212,6 @@ class CleanOp(utils.Operator):
         channel, message = args
         channel.OperatorInstances[BanOp].bans = collections.OrderedDict()
         channel.pm("Cleaned bans list... Starting fresh @{} (local time)".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-
 
 class AboutOp(utils.Operator):
     """"""
@@ -254,9 +280,12 @@ if __name__ == '__main__':
             #p(i.raw,'\n')
             if i.command == "PRIVMSG":
 
-                if i.message == "->QUIT" and i.user in SUPER_USERS:
+                if i.message == "$SHELLSTOP" and i.user == "bomb_mask":
                     twitch.channels["bomb_mask"].pm("Exiting...")
                     break
+
+                if i.message == "PRINT" and i.user == "bomb_mask":
+                    constructJSON(twitch)
 
                 # if i.message.startswith(":"):
                 #     twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
