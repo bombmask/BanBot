@@ -286,6 +286,8 @@ if __name__ == '__main__':
 				if i.message == "PRINT" and i.user == "bomb_mask":
 					constructJSON(twitch)
 
+                if i.message == "BACKUP" and i.user == "bomb_mask"
+                    json.dumps(twitch.__dict__, default=str, indent=4)
 				# if i.message.startswith(":"):
 				#	 twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
 				#	 #p("<Sending>", i.message)
