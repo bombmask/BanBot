@@ -1,3 +1,5 @@
+#! /usr/bin/env python3.4
+# -*- coding: utf-8 -*-
 from twitchtools import login, chat, utils
 import collections
 import socket
@@ -41,6 +43,26 @@ def constructJSON(IRC, Channel=None):
 
 				for BanOb in Channel[1].OperatorInstances[BanOp].bans.values():
 					json.dump({'#'+Channel[0]:BanOb.toJSON()}, fout, default=str, indent=4)
+
+def backup_data(IRC, filename):
+	json_total = {}
+	json_total["channels"] = {
+		channel[1].name : { user[1].name : [message.raw \
+				for message in user[1].messages]\
+			for user in channel[1].users.items() }\
+		for channel in IRC.channels.items()
+	}
+	#backup all channels
+	# for channel in IRC.channels.items():
+	# 	assert(channel[0] == channel[1].name)
+	#
+	# 	for user in channel[1].users.items():
+	# 		print(user)
+	# 		for message in user[1].messages:
+	# 			print(message)
+	# 	#json_total["channels"][channel[0]] = }
+	with open(filename, 'w') as fout:
+		json.dump(json_total, fout, indent=4)
 
 class banObject(object):
 
@@ -237,10 +259,10 @@ class JoinCommand(utils.Operator):
 
 	def execute(self, *args):
 		channel, message = args
-		newChannel = message.message.split(" ")[1]
+		newChannel = message.message.split(" ")[1:]
 
 		channel.ircParent.join(newChannel)
-		print "Joined :", newChannel
+		print("Joined :", newChannel)
 
 class LeaveCommand(utils.Operator):
 	@classmethod
@@ -256,7 +278,9 @@ class LeaveCommand(utils.Operator):
 		newChannel = message.message.split(" ")[1]
 
 		channel.ircParent.part(newChannel)
-		print "Left :", newChannel
+		print("Left :", newChannel)
+
+
 
 if __name__ == '__main__':
 
@@ -279,15 +303,18 @@ if __name__ == '__main__':
 			#p(i.raw,'\n')
 			if i.command == "PRIVMSG":
 
-				if i.message == "$SHELLSTOP" and i.user == "bomb_mask":
+				if i.message == "$stop" and i.user == "bomb_mask":
 					twitch.channels["bomb_mask"].pm("Exiting...")
 					break
 
-				if i.message == "PRINT" and i.user == "bomb_mask":
+				if i.message == "$print" and i.user == "bomb_mask":
 					constructJSON(twitch)
 
-                if i.message == "BACKUP" and i.user == "bomb_mask"
-                    json.dumps(twitch.__dict__, default=str, indent=4)
+				if i.message == "$backup" and i.user == "bomb_mask":
+					backup_data(twitch, "default.json")
+					p("Creating backup.json")
+
+
 				# if i.message.startswith(":"):
 				#	 twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
 				#	 #p("<Sending>", i.message)
@@ -295,3 +322,8 @@ if __name__ == '__main__':
 
 			if i.command == "CLEARCHAT":
 				p(i.message, i.raw)
+
+
+"""
+CAP REQ :twitch.tv/\r\n
+"""
