@@ -416,7 +416,7 @@ if __name__ == '__main__':
                     backup_data(twitch, "default.json")
                     p("Creating backup.json")
 
-                p(i.raw,i)
+                #p(i.raw,i)
 
                 # if i.message.startswith(":"):
                 #     twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
