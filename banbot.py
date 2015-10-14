@@ -11,6 +11,7 @@ import webbrowser
 import json
 import re
 
+import traceback
 ###########             CONFIG                ###########
 twitchlink = ("irc.twitch.tv", 6667)
 
@@ -21,8 +22,6 @@ SUPER_USERS = ["bomb_mask", "batedurgonnadie"]
 utils.Printer.ON = True
 utils.Printer.level = "DEBUG"
 ###########              END                  ###########
-def findWholeWord(w):
-    return re.compile(r'\b({0})\b'.format(w), flags=re.IGNORECASE).search
 
 def constructJSON(IRC, Channel=None):
     JsonDict = {}
@@ -47,6 +46,7 @@ def constructJSON(IRC, Channel=None):
                 for BanOb in Channel[1].OperatorInstances[BanOp].bans.values():
                     json.dump({'#'+Channel[0]:BanOb.toJSON()}, fout, default=str, indent=4)
 
+
 def backup_data(IRC, filename):
     json_total = {}
     json_total["channels"] = {
@@ -66,6 +66,7 @@ def backup_data(IRC, filename):
     #     #json_total["channels"][channel[0]] = }
     with open(filename, 'w') as fout:
         json.dump(json_total, fout, indent=4)
+
 
 class banObject(object):
 
@@ -124,6 +125,7 @@ class banObject(object):
 
         return ""
 
+
 class BanOp(utils.Operator):
     def __init__(self):
         self.p = utils.Printer("BanBotRuntime")
@@ -149,6 +151,7 @@ class BanOp(utils.Operator):
 
         except KeyError:
             self.bans[target_user.name] = banObject(target_user)
+
 
 class ReportOp(utils.Operator):
     def __init__(self):
@@ -190,15 +193,7 @@ class ReportOp(utils.Operator):
             UserLists["Markdown"].append(BanObject.toMarkdown())
 
         #Template string for gist and markdown
-        gist = """
-# {header}
-Ban Report Generated at [{time}]
-
-## User Report Issued - {amount} Total Users Banned
-{UserLinkList}
-
-{UserMarkdownList}
-        """.format(
+        gist = "# {header}\nBan Report Generated at [{time}]\n\n## User Report Issued - {amount} Total Users Banned\n{UserLinkList}\n\n{UserMarkdownList}\n".format(
             header=bb_info["header"],
             time=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             amount=len(channel.OperatorInstances[BanOp].bans),
@@ -222,6 +217,7 @@ Ban Report Generated at [{time}]
 
         self.p(r["url"])
 
+
 class CleanOp(utils.Operator):
     @classmethod
     def poll(cls, *args):
@@ -237,6 +233,7 @@ class CleanOp(utils.Operator):
         channel.OperatorInstances[BanOp].bans = collections.OrderedDict()
         channel.pm("Cleaned bans list... Starting fresh @{} (local time)".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
+
 class AboutOp(utils.Operator):
     """"""
 
@@ -250,6 +247,7 @@ class AboutOp(utils.Operator):
     def execute(self, *args):
         channel, message = args
         channel.pm("Twitch chat ban managment bot created by bomb_mask ")
+
 
 class JoinCommand(utils.Operator):
     @classmethod
@@ -267,6 +265,7 @@ class JoinCommand(utils.Operator):
         channel.ircParent.join(newChannel)
         print("Joined :", newChannel)
 
+
 class LeaveCommand(utils.Operator):
     @classmethod
     def poll(cls, *args):
@@ -283,6 +282,7 @@ class LeaveCommand(utils.Operator):
         channel.ircParent.part(newChannel)
         print("Left :", newChannel)
 
+
 class KappaRemove(utils.Operator):
     first_run = 0
     init_on_attach = True
@@ -295,25 +295,24 @@ class KappaRemove(utils.Operator):
         self.banned_words = ["bbbanned"]
         self.ban_count = 0
         self.ban_whisper_message = "/me Reminder: K appa/K eepo/K appapride are all banned here, they show up as *** for everyone else but yourself. Please refrain from using if you do you will get purged/timed out."
+        self.term = utils.Printer("KappaRemove")
 
     @classmethod
     def poll(cls, *args):
-        #if initalize
-        if not args[0].OperatorInstances.get(KappaRemove,False):
-            return True
 
         has_banned_word = False
+        message_words = args[1].message.split(' ')
         for banned_word in args[0].OperatorInstances.get(KappaRemove).banned_words:
-            if findWholeWord(banned_word)(args[1].message):
+            if banned_word in message_words:
                 has_banned_word = True
+
 
 
         return (
             args[1].command == "PRIVMSG" and
             (
                 has_banned_word or
-                args[1].message.startswith(":kcfg") or
-                not args[0].OperatorInstances.get(KappaRemove, False)
+                args[1].message.startswith(":kcfg")
             )
         )
 
@@ -323,8 +322,8 @@ class KappaRemove(utils.Operator):
         channel, message = args
         user = channel.users[message.target]
 
-        print(message)
-        print(channel.OperatorInstances.get(KappaRemove).banned_words)
+        #print(message)
+        #print(channel.OperatorInstances.get(KappaRemove).banned_words)
         # Priority?
         if message.message.startswith(":kcfg") and (message.tags.get("user_type", "") == "mod" or message.user == channel.owner):
             self.commands(channel, user, message)
@@ -338,8 +337,10 @@ class KappaRemove(utils.Operator):
 
             if user.banned_word_count == 1:
                 channel.pm("/timeout {} 10".format(user.name))
+
             elif user.banned_word_count == 2:
                 channel.pm("/timeout {} 300".format(user.name))
+
             elif user.banned_word_count > 2:
                 channel.pm("/timeout {} 600".format(user.name))
 
@@ -367,7 +368,6 @@ class KappaRemove(utils.Operator):
             print(E)
 
 
-
 if __name__ == '__main__':
 
     p = utils.Printer("MAINLOOP")
@@ -389,6 +389,10 @@ if __name__ == '__main__':
         for i in twitch.readfile():
             #p(i.raw,'\n')
             if i.command == "PRIVMSG":
+                if i.message == "$channels" and i.user == "bomb_mask":
+                    for name, channel in twitch.channels.items():
+                        p(name, channel)
+
 
                 if i.message == "$stop" and i.user == "bomb_mask":
                     twitch.channels["bomb_mask"].pm("Exiting...")
