@@ -165,7 +165,7 @@ class ReportOp(utils.Operator):
             (
                 args[1].user == (args[0].owner) or
                 args[1].user in SUPER_USERS or
-                ( args[1].tags.get("user_type", "") == "mod" )
+                ( args[1].tags.get("user-type", "") == "mod" )
             )
         )
 
@@ -325,7 +325,7 @@ class KappaRemove(utils.Operator):
         #print(message)
         #print(channel.OperatorInstances.get(KappaRemove).banned_words)
         # Priority?
-        if message.message.startswith(":kcfg") and (message.tags.get("user_type", "") == "mod" or message.user == channel.owner):
+        if message.message.startswith(":kcfg") and (message.tags.get("user-type", "") == "mod" or message.user == channel.owner):
             self.commands(channel, user, message)
 
         else:
@@ -416,6 +416,7 @@ if __name__ == '__main__':
                     backup_data(twitch, "default.json")
                     p("Creating backup.json")
 
+                p(i.raw,i)
 
                 # if i.message.startswith(":"):
                 #     twitch.channels["bomb_mask"].pm(i.message+" "+i.user)
