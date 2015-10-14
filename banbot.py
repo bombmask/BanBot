@@ -292,7 +292,7 @@ class KappaRemove(utils.Operator):
         pass
 
     def __init__(self):
-        self.banned_words = ["bbbanned"]
+        self.banned_words = []
         self.ban_count = 0
         self.ban_whisper_message = "/me Reminder: K appa/K eepo/K appapride are all banned here, they show up as *** for everyone else but yourself. Please refrain from using if you do you will get purged/timed out."
         self.term = utils.Printer("KappaRemove")
@@ -356,13 +356,18 @@ class KappaRemove(utils.Operator):
             args = message.message.split(' ')[2:]
 
             print(command, args)
-            if command == "addwords":
+            if command == "ban":
                 self.banned_words += args
 
-            if command == "removeword":
+            if command == "unban":
                 for i in args:
-                    self.banned_words.pop(i)
+                    try:
+                        self.banned_words.remove(i)
+                    except ValueError as E:
+                        self.term("Word '{}' Does Not Exist".format(E))
 
+            if command == "words":
+                channel.pm("The Banned Words Are:",",".join(self.banned_words))
 
         except Exception as E:
             print(E)
