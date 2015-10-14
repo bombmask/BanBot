@@ -369,6 +369,12 @@ class KappaRemove(utils.Operator):
             if command == "words":
                 channel.pm("The Banned Words Are:",",".join(self.banned_words))
 
+            if command == "whisper":
+                user.whisper(self.ban_whisper_message)
+
+            if command == "message":
+                self.ban_whisper_message = " ".join(args)
+
         except Exception as E:
             print(E)
 
