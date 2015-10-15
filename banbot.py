@@ -375,6 +375,12 @@ class KappaRemove(utils.Operator):
             if command == "message":
                 self.ban_whisper_message = " ".join(args)
 
+            if command == "totals":
+                if args[0] == "whisper":
+                    user.whisper("Bopped a total of {} times in this channel".format(self.ban_count))
+                else:
+                    channel.pm("Bopped a total of {} times in this channel".format(self.ban_count))
+
         except Exception as E:
             print(E)
 
