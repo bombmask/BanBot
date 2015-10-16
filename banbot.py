@@ -24,7 +24,7 @@ bb_info = {"header": "BanBot Distro TheMaskOfTruthv1"}
 SUPER_USERS = ["bomb_mask"]
 
 utils.Printer.ON = True
-utils.Printer.level = "LOGGING"
+utils.Printer.level = "ALL"
 ###########              END                  ###########
 
 def constructJSON(IRC, Channel=None):
