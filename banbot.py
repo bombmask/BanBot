@@ -12,15 +12,19 @@ import json
 import re
 import code
 import traceback
+import atexit
+import os
+
 ###########             CONFIG                ###########
 twitchlink = ("irc.twitch.tv", 6667)
-twitchlink = ("localhost", 6667)
+#twitchlink = ("localhost", 6667)
+
 bb_info = {"header": "BanBot Distro TheMaskOfTruthv1"}
 
-SUPER_USERS = ["bomb_mask", "batedurgonnadie"]
+SUPER_USERS = ["bomb_mask"]
 
 utils.Printer.ON = True
-utils.Printer.level = "DEBUG"
+utils.Printer.level = "LOGGING"
 ###########              END                  ###########
 
 def constructJSON(IRC, Channel=None):
@@ -65,9 +69,12 @@ def backup_data(IRC, filename):
 
 
     with open(filename, 'w') as fout:
-        json.dump(backup_dictionary, fout, indent=4)
+        json.dump(backup_dictionary, fout)
 
 def import_data(IRC, filename):
+    if not os.path.exists(filename)
+        return
+
     with open(filename) as fin:
         reloaded = json.load(fin)
 
@@ -395,9 +402,15 @@ class KappaRemove(utils.Operator):
 
 
 if __name__ == '__main__':
+    with open("cfg.json") as fin:
+        cfg = json.load(fin)
+
 
     p = utils.Printer("MAINLOOP")
-    with chat.IRC(twitchlink, login.Profile("themaskoftruth")) as twitch:
+    with chat.IRC(twitchlink, login.Profile(cfg["profile"])) as twitch:
+        import_data(twitch, "emergency_backup.bak")
+        atexit.register(backup_data, twitch, 'emergency_backup.bak')
+
         twitch.capibilities("tags")
         twitch.capibilities("commands")
 
@@ -420,19 +433,19 @@ if __name__ == '__main__':
         for i in twitch.readfile():
             #p(i.raw,'\n')
             if i.command == "PRIVMSG":
-                if i.message == "$channels" and i.user == "bomb_mask":
+                if i.message == "$channels" and (i.user in SUPER_USERS):
                     for name, channel in twitch.channels.items():
                         p(name, channel)
 
 
-                if i.message == "$stop" and i.user == "bomb_mask":
+                if i.message == "$stop" and (i.user in SUPER_USERS):
                     twitch.channels["bomb_mask"].pm("Exiting...")
                     break
 
-                if i.message == "$print" and i.user == "bomb_mask":
+                if i.message == "$print" and (i.user in SUPER_USERS):
                     constructJSON(twitch)
 
-                if i.message == "$backup" and i.user == "bomb_mask":
+                if i.message == "$backup" and (i.user in SUPER_USERS):
                     backup_data(twitch, "default.json")
                     p("Creating backup.json")
 

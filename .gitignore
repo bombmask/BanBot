@@ -57,6 +57,7 @@ docs/_build/
 target/
 
 *.json
+*.bak
 !cfg.json
 channels.txt
 PyramidBreaker.py
