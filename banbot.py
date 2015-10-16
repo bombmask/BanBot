@@ -78,7 +78,7 @@ def import_data(IRC, filename):
         reloaded = json.load(fin)
 
     for channel, users in reloaded["channels"].items():
-        IRC.create_channel(channel)
+        IRC.join(channel)
         for user, messages in users.items():
             IRC.channels[channel].createUser(user)
             for message in messages:
@@ -407,16 +407,16 @@ if __name__ == '__main__':
 
     p = utils.Printer("MAINLOOP")
     with chat.IRC(twitchlink, login.Profile(cfg["profile"])) as twitch:
-        import_data(twitch, "emergency_backup.bak")
         atexit.register(backup_data, twitch, 'emergency_backup.bak')
 
         twitch.capibilities("tags")
         twitch.capibilities("commands")
 
-        # p("loading import data...")
-        # import_data(twitch, "default.json")
-        # p("done...")
+        p("loading import data...")
+        import_data(twitch, "emergency_backup.bak")
         # code.interact(local=locals())
+        # import_data(twitch, "default.json")
+        p("done...")
 
         with open("channels.txt") as fin:
             twitch.join(fin.read().strip())
