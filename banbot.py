@@ -72,8 +72,7 @@ def backup_data(IRC, filename):
         json.dump(backup_dictionary, fout)
 
 def import_data(IRC, filename):
-    if not os.path.exists(filename)
-        return
+    if not os.path.exists(filename): return
 
     with open(filename) as fin:
         reloaded = json.load(fin)
