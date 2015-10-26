@@ -61,29 +61,34 @@ def backup_data(IRC, filename):
     "channels" : {
             #Channel key of users key(s) of message(s) list
             channel[1].name : { user[1].name : [(message.raw, message.time()) \
-                    for message in user[1].messages]\
-                    for user in channel[1].users.items() }\
-                    for channel in IRC.channels.items()}
+                    for message in user[1].messages] } \
+                    for user in channel[1].users.items() } \
+                    for channel in IRC.channels.items()
     }
 
 
 
     with open(filename, 'w') as fout:
-        json.dump(backup_dictionary, fout)
+        json.dump(backup_dictionary, fout, indent=4)
 
 def import_data(IRC, filename):
-    if not os.path.exists(filename): return
+    if not os.path.exists(filename):
+        print("Returning from import")
+        return
 
     with open(filename) as fin:
         reloaded = json.load(fin)
 
+
     for channel, users in reloaded["channels"].items():
         IRC.join(channel)
-        for user, messages in users.items():
-            IRC.channels[channel].createUser(user)
-            for message in messages:
-                IRC.channels[channel].users[user]._add_message(*list(message))
 
+        for user in users.items():
+
+            for message in user[1]:
+                IRC.channels[channel].RecvMessage(chat.Message(message[0], message[1]),True)
+
+    print("Success on import")
 
 class banObject(object):
 
@@ -113,26 +118,35 @@ class banObject(object):
         return {self.user.name:JSONDICT}
 
     def toMarkdown(self):
-        #self.p("TO MARKDOWN CALLED")
-        message_list = ""
 
-        last = datetime.datetime.now()
+        ban_report_string = " >> Banned/timedout at {}\n"
+        ban_msg_list = [[ban, ban_report_string.format(ban)] for ban in self.ban_times]
 
-        for msg in self.user.messages:
-            try:
-                message_list +=  " >> Banned/timedout at {}\n".format(self.banTimeBetween(last, msg.creation_time).strftime('%Y-%m-%d %H:%M:%S'))
-            except AttributeError:
-                pass
+        message_list = ban_msg_list+[ [msg.creation_time, self.messageToString(msg)] for msg in self.user.messages]
 
-            last = msg.creation_time
+        message_list.sort()
 
-            message_list += " {}\n".format(self.messageToString(msg))
+        message_string = ""
+        for data in message_list:
+            message_string += data[1]
 
-        inter = """### {user}\n```\n{messageList}\n```\n""".format(user = self.user.name, messageList=message_list)
+        # last = datetime.datetime.now()
+        #
+        # for msg in self.user.messages:
+        #     try:
+        #         message_list +=  " >> Banned/timedout at {}\n".format(self.banTimeBetween(last, msg.creation_time))
+        #     except AttributeError:
+        #         pass
+        #
+        #     last = msg.creation_time
+        #
+        #     message_list += " {}\n".format(self.messageToString(msg))
+
+        inter = """### {user}\n```\n{messageList}\n```\n""".format(user = self.user.name, messageList=message_string)
         return inter
 
     def messageToString(self, message):
-        return "[{}] :{}".format(message.time(), message.message)
+        return " [{}] :{}\n".format(message.time(), message.message)
 
     def append(self):
         self.ban_times.append(datetime.datetime.now())
@@ -437,8 +451,10 @@ if __name__ == '__main__':
                         p(name, channel)
 
 
-                if i.message == "$stop" and (i.user in SUPER_USERS):
+                if i.message == "-stop" and (i.user in SUPER_USERS):
+
                     twitch.channels["bomb_mask"].pm("Exiting...")
+
                     break
 
                 if i.message == "$print" and (i.user in SUPER_USERS):
