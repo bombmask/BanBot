@@ -61,3 +61,11 @@ target/
 !cfg.json
 channels.txt
 PyramidBreaker.py
+
+
+# Visual Studio
+.vs/*
+*.pyproj
+
+# Database
+*.db
