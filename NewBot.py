@@ -14,7 +14,7 @@ class BasicBanEvent(EH.EventHandler):
 
     @classmethod
     def Execute(cls, ref, *message):
-        data = ref.ChannelData(message[1].params.split(' ')[0])
+        data = ref.ChannelData(message[1].params[0])
         data.banAmount += 1
 
         ref.dftCursor.execute(
@@ -33,12 +33,71 @@ class BasicStats(EH.EventHandler):
 
     @classmethod
     def Execute(cls, ref, *message):
-        if message[1].GetMessage().lower() == "-hi":
-            ref.PrivateMessage(message[1].params.split(' ')[0][1:], ref.ChannelData(message[1].params.split(' ',1)[0]).banAmount)
+        if message[1].GetMessage().lower() == "-hi" and tm.GetTags().get("display-name").lower() in superUsers:
+            ref.PrivateMessage(message[1].params[0][1:], ref.ChannelData(message[1].params[0]).banAmount)
 
     @classmethod
     def Once(cls, ref):
         pass
+
+class KappaCommand(EH.EventHandler):
+    TYPE = EH.TEvent.PRIVMSG
+
+    @classmethod
+    def Execute(cls, ref, *message):
+        tm = message[1]
+        if (tm.GetMessage().startswith("-kc") and
+            (
+                tm.GetTags().get("user-type") == "mod" or
+                tm.GetTags().get("display-name").lower() == tm.params[0][1:] or
+                tm.GetTags().get("display-name").lower() in superUsers
+            )):
+            # Execute command for mod, super user, or owner
+            # Configure section
+            parts = tm.GetMessage().split(" ")[1:]
+            if parts[0] == "ban":
+                print(parts[1:])
+                ref.ChannelData().bannedWords += parts[1:]
+                print("wordlist",parts)
+            elif parts[0] == "message":
+                ref.ChannelData().kMessage = " ".join(parts[1:])
+
+
+
+            return #Don't check for banned words
+
+        splicedMessage = tm.GetMessage().split(' ')
+
+        print("searching ",splicedMessage)
+        for word in ref.ChannelData(tm.params[0]).bannedWords:
+            print("comparing", word)
+            if word in splicedMessage:
+                print("found word")
+                break
+        else:
+            print("no words,exiting")
+            return
+
+        try:
+            USER = ref.ChannelData(tm.params[0]).Users[tm.GetTags().get("display-name").lower()]
+        except KeyError:
+            USER = ref.ChannelData(tm.params[0]).InitalizeNewUser(tm.GetTags().get("display-name").lower())
+
+        exec("seconds = "+ref.ChannelData(tm.params[0]).timeCurve.format(times=USER.bannedWordCount))
+        ref.PrivateMessage(tm.params[0], "timeout {} {}".format(tm.GetTags().get("display-name").lower(), seconds))
+
+
+    @classmethod
+    def Once(cls, ref):
+        CS.ChannelData.kMessage = ""
+        CS.ChannelData.purgeAmount = 0
+        CS.ChannelData.bannedWords = []
+        CS.ChannelData.timeCurve = "{times}^2"
+        CS.UserData.bannedWordCount = 0
+
+        ref.CreateTable("UserData", "User TEXT, Channel TEXT, DATA TEXT")
+
+
 
 class JoinCommand(EH.EventHandler):
     TYPE = EH.TEvent.PRIVMSG
@@ -63,7 +122,7 @@ if __name__ == '__main__':
     twitch.Register(BasicBanEvent )
     twitch.Register(JoinCommand)
     twitch.Register(LeaveCommand)
-    twitch.Register(BasicStats)
+    twitch.Register(KappaCommand)
 
     twitch.flags["write"] = True
     cProfile = Profile("bombmask")
