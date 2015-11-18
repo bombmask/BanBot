@@ -109,7 +109,7 @@ class JoinCommand(EH.EventHandler):
     def Execute(cls, ref, *message):
 
         if message[1].GetMessage().lower().startswith("-join") and message[1].GetTags().get("display-name").lower() in superUsers:
-            ref.Join(message[1].GetMessage().split(" ",2g)[1])
+            ref.Join(message[1].GetMessage().split(" ",2)[1])
 
 class LeaveCommand(EH.EventHandler):
     TYPE = EH.TEvent.PRIVMSG
