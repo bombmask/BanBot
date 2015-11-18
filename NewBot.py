@@ -4,6 +4,9 @@ import twitchtools.chat.EventHandler as EH
 from twitchtools.login.profiles import Profile
 from twitchtools.chat import ChannelStorage as CS
 import datetime
+import json
+import requests
+import time
 # Example classes
 
 superUsers = ["bomb_mask"]
@@ -105,7 +108,7 @@ class JoinCommand(EH.EventHandler):
     @classmethod
     def Execute(cls, ref, *message):
 
-        if message[1].GetMessage().lower().startswith("-join ") and message[1].GetTags().get("display-name").lower() in superUsers:
+        if message[1].GetMessage().lower().startswith("-join") and message[1].GetTags().get("display-name").lower() in superUsers:
             ref.Join(message[1].GetMessage().split(" ",2)[1])
 
 class LeaveCommand(EH.EventHandler):
@@ -113,8 +116,27 @@ class LeaveCommand(EH.EventHandler):
 
     @classmethod
     def Execute(cls, ref, *message):
-        if message[1].GetMessage().lower().startswith("-leave ") and message[1].GetTags().get("display-name").lower() in superUsers:
+        if message[1].GetMessage().lower().startswith("-leave") and message[1].GetTags().get("display-name").lower() in superUsers:
             ref.Leave(message[1].GetMessage().split(" ",2)[1])
+
+class JoinLargest(EH.EventHandler):
+    TYPE = EH.TEvent.PRIVMSG
+
+    @classmethod
+    def Execute(cls, ref, *message):
+        if message[1].GetMessage().lower().startswith("-joinall") and message[1].GetTags().get("display-name").lower() in superUsers:
+            total = 0
+            channels = requests.get("https://api.twitch.tv/kraken/streams?limit={}".format(int(message[1].GetMessage().split(" ",2)[1]))).json()
+            for i in range(int(message[1].GetMessage().split(" ",2)[1])):
+                ref.Join(channels["streams"][i]["channel"]["display_name"])
+                channel = channels["streams"][i]
+                total += int(channel["viewers"])
+                print("Joining channel {} with {} viewers".format(channel["channel"]["display_name"], channel["viewers"]))
+                if i%10 == 0:
+                    time.sleep(4)
+            print("total {} viewers :",total)
+
+
 
 if __name__ == '__main__':
     twitch = IRCT.IRC_DB()
@@ -122,7 +144,7 @@ if __name__ == '__main__':
     twitch.Register(BasicBanEvent )
     twitch.Register(JoinCommand)
     twitch.Register(LeaveCommand)
-    twitch.Register(KappaCommand)
+
 
     twitch.flags["write"] = True
     cProfile = Profile("bombmask")
