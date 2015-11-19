@@ -7,6 +7,9 @@ import datetime
 import json
 import requests
 import time
+
+from command import Command, AwareCommand, PERMLEVEL as cmdPERMISSION
+import botUnifier
 # Example classes
 
 superUsers = ["bomb_mask"]
@@ -30,7 +33,6 @@ class BasicBanEvent(EH.EventHandler):
         ref.CreateTable("bans", "Time TEXT, User TEXT, Us BOOL DEFAULT true")
         CS.ChannelData.banAmount = 0
 
-
 class BasicStats(EH.EventHandler):
     TYPE = EH.TEvent.PRIVMSG
 
@@ -43,62 +45,67 @@ class BasicStats(EH.EventHandler):
     def Once(cls, ref):
         pass
 
-class KappaCommand(EH.EventHandler):
+class KappaCommand(botUnifier.BotCommand):
     TYPE = EH.TEvent.PRIVMSG
+    COMMAND = AwareCommand("-","kc", [cmdPERMISSION.HOST,cmdPERMISSION.SUPERUSER,cmdPERMISSION.MOD])
 
-    @classmethod
-    def Execute(cls, ref, *message):
+    def Execute(self, ref, *message):
+        if not self.bHasBeenAdded:
+            raise RuntimeError("This command has not be pre registered")
+
         tm = message[1]
-        if (tm.GetMessage().startswith("-kc") and
-            (
-                tm.GetTags().get("user-type") == "mod" or
-                tm.GetTags().get("display-name").lower() == tm.params[0][1:] or
-                tm.GetTags().get("display-name").lower() in superUsers
-            )):
-            # Execute command for mod, super user, or owner
-            # Configure section
-            parts = tm.GetMessage().split(" ")[1:]
-            if parts[0] == "ban":
-                print(parts[1:])
-                ref.ChannelData().bannedWords += parts[1:]
-                print("wordlist",parts)
-            elif parts[0] == "message":
-                ref.ChannelData().kMessage = " ".join(parts[1:])
-
-
-
+        if self.COMMAND.Test(tm):
+            self.Configure(tm)
             return #Don't check for banned words
 
         splicedMessage = tm.GetMessage().split(' ')
 
-        print("searching ",splicedMessage)
         for word in ref.ChannelData(tm.params[0]).bannedWords:
-            print("comparing", word)
             if word in splicedMessage:
-                print("found word")
                 break
         else:
-            print("no words,exiting")
             return
 
-        try:
-            USER = ref.ChannelData(tm.params[0]).Users[tm.GetTags().get("display-name").lower()]
-        except KeyError:
-            USER = ref.ChannelData(tm.params[0]).InitalizeNewUser(tm.GetTags().get("display-name").lower())
+        USER = ref.ChannelData().GetUser(tm.GetTags().get("display-name"))
 
-        exec("seconds = "+ref.ChannelData(tm.params[0]).timeCurve.format(times=USER.bannedWordCount))
-        ref.PrivateMessage(tm.params[0], "timeout {} {}".format(tm.GetTags().get("display-name").lower(), seconds))
+        seconds = eval(ref.ChannelData().timeCurve.format(times=int(USER.bannedWordCount)))
 
+        ref.PrivateMessage(tm.params[0][1:], "/timeout {} {}".format(tm.GetTags().get("display-name").lower(), seconds))
+
+        USER.bannedWordCount += 1
+        ref.ChannelData().purgeAmount += 1
+
+        self.BOT.Whisper(tm.GetTags()["display-name"], ref.ChannelData().kMessage)
+
+        if ref.ChannelData().purgeAmount % ref.ChannelData().PublicSpeak:
+            ref.PrivateMessage(tm.params[0], ref.ChannelData().kMessage)
+
+    def Configure(self, message):
+        # Execute command for mod, super user, or owner
+        # Configure section
+        parts = message.GetMessage().split(" ")[1:]
+        if parts[0] == "ban":
+            ref.ChannelData().bannedWords.update(parts[1:])
+
+        elif parts[0] == "message":
+            ref.ChannelData().kMessage = " ".join(parts[1:])
+
+        elif parts[0] == "time":
+            ref.ChannelData().timeCurve = "".join(parts[1:])
+
+        elif parts[0] == "list":
+            ref.PrivateMessage(message.params[0],*ref.ChannelData().bannedWords)
 
     @classmethod
     def Once(cls, ref):
+        CS.ChannelData.PublicSpeak = 10
         CS.ChannelData.kMessage = ""
         CS.ChannelData.purgeAmount = 0
-        CS.ChannelData.bannedWords = []
-        CS.ChannelData.timeCurve = "{times}^2"
+        CS.ChannelData.bannedWords = set()
+        CS.ChannelData.timeCurve = "300*{times}+10"
         CS.UserData.bannedWordCount = 0
 
-        ref.CreateTable("UserData", "User TEXT, Channel TEXT, DATA TEXT")
+        #ref.CreateTable("UserData", "User TEXT, Channel TEXT, DATA TEXT")
 
 
 
@@ -137,32 +144,79 @@ class JoinLargest(EH.EventHandler):
             print("total {} viewers :",total)
 
 
+class TestWhisper(botUnifier.BotCommand):
+    TYPE = EH.TEvent.PRIVMSG
+    COMMAND = Command(":", "whisperme")
+
+    def Execute(self, ref, *msg):
+        if not self.bHasBeenAdded:
+            raise RuntimeError("This command has not be pre registered")
+
+        if not self.COMMAND.Test(msg[1].GetMessage()):
+            return
+
+        self.BOT.Whisper(msg[1].GetTags().get("display-name", "bombmask"), "Hello world!")
+
+
 
 if __name__ == '__main__':
-    twitch = IRCT.IRC_DB()
 
-    twitch.Register(BasicBanEvent )
-    twitch.Register(JoinCommand)
-    twitch.Register(LeaveCommand)
+    m = botUnifier.BotDB()
 
+    m.flags["write"] = True
+    cProfile = Profile("bombmask", "OAUTHS")
+    m.username = cProfile.name
+    m.password = cProfile.password
+    m.pairTwitch = ("irc.twitch.tv", 6667)
+    """
+    ["199.9.253.119","199.9.253.120", "10.1.222.247","192.16.64.213",
+    "192.16.64.182", "199.9.255.149", "192.16.64.173", "199.9.255.148",
+    "192.16.64.181", "199.9.255.146", "92.16.64.214", "199.9.255.147"]
+    """
+    m.pairWhisper = ("199.9.253.119", 6667)
 
-    twitch.flags["write"] = True
-    cProfile = Profile("bombmask")
-    twitch.username = cProfile.name
-    twitch.password = cProfile.password
-    twitch.serverPair = ("irc.twitch.tv", 6667)
-    twitch.Start()
-    twitch.Request("twitch.tv/tags")
-    twitch.Request("twitch.tv/commands")
+    m.tagsAll = ["twitch.tv/tags", "twitch.tv/commands"]
 
+    m.Register(TestWhisper)
+    m.Register(KappaCommand)
 
-    twitch.Join("bomb_mask")
+    m.Start()
 
+    m.twitchLink.Join("bomb_mask")
 
-    #print("entering mainloop")
+    m.whisperLink.MainLoop(fork=True)
+
     try:
-        twitch.MainLoop()
+       m.twitchLink.MainLoop()
+
     except KeyboardInterrupt as E:
         pass
 
-    twitch.Close()
+    m.Stop()
+    # twitch = IRCT.IRC_DB()
+    #
+    # twitch.Register(BasicBanEvent )
+    # twitch.Register(JoinCommand)
+    # twitch.Register(LeaveCommand)
+    #
+    #
+    # twitch.flags["write"] = True
+    # cProfile = Profile("bombmask")
+    # twitch.username = cProfile.name
+    # twitch.password = cProfile.password
+    # twitch.serverPair = ("irc.twitch.tv", 6667)
+    # twitch.Start()
+    # twitch.Request("twitch.tv/tags")
+    # twitch.Request("twitch.tv/commands")
+    #
+    #
+    # twitch.Join("bomb_mask")
+    #
+    #
+    # #print("entering mainloop")
+    # try:
+    #     twitch.MainLoop()
+    # except KeyboardInterrupt as E:
+    #     pass
+    #
+    # twitch.Close()
