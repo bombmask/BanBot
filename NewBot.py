@@ -107,8 +107,6 @@ class KappaCommand(botUnifier.BotCommand):
 
         #ref.CreateTable("UserData", "User TEXT, Channel TEXT, DATA TEXT")
 
-
-
 class JoinCommand(EH.EventHandler):
     TYPE = EH.TEvent.PRIVMSG
 
@@ -142,7 +140,6 @@ class JoinLargest(EH.EventHandler):
                 if i%10 == 0:
                     time.sleep(4)
             print("total {} viewers :",total)
-
 
 class TestWhisper(botUnifier.BotCommand):
     TYPE = EH.TEvent.PRIVMSG
