@@ -7,10 +7,11 @@ class WebServer(object):
 
     def __init__(self):
         self.link = socket.socket()
-        self.link.bind(("localhost", 80))
+        self.link.bind(("0.0.0.0", 8080))
 
     def AddMe(self, ref):
         self.ref = ref
+        self.defaultCursor = ref.dbConn.cursor()
 
     def RespondRequest(self):
         while(True):
@@ -27,21 +28,34 @@ class WebServer(object):
                     print("ERROR!!")
                     print(a[0])
 
-                print(REQUEST)
+                user = REQUEST.split("?",1)[1].split("&")
+                for i in user:
+                    if i.startswith("user"):
+                        user = i.split('=')[1]
 
-                very_large_file = json.dumps({"content":{"main":{"trash":"====Hello world====\r\n"*500}}})
+                print("requested user data:"+user)
 
+                self.defaultCursor.execute("SELECT Time, Channel, Message FROM chatdata WHERE user=? ORDER BY Time ASC",(user.lower(),))
 
-                conn[0].sendall(
-                    bytes(
-                        "HTTP/1.1 200 OK\r\nContent-Length: {length}\r\nContent-Type: text/json\r\n\r\n{Body}".format(
-                                length=len(very_large_file),
-                                Body=very_large_file
-                            ),
-                        "UTF-8"
+                userData = {"username":user, "messages":[]}
+
+                for message in self.defaultCursor.fetchall():
+                    userData["messages"].append({"time":message[0], "channel":message[1], "message":message[2]})
+
+                sendString = ""
+                print(len(userData["messages"]))
+                if len(userData["messages"]) != 0:
+                    sendData = json.dumps(userData)
+                    sendString = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {length}\r\nContent-Type: text/json\r\n\r\n{Body}".format(
+                            length=len(sendData),
+                            Body=sendData
                         )
-                )
-            except Error as E:
+                else:
+                    sendString = "HTTP/1.1 404 Not Found\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nContent-Type: text/json\r\n\r\n"
+
+                conn[0].sendall(bytes(sendString,"UTF-8"))
+
+            except Exception as E:
                 print(E)
 
             conn[0].close()
@@ -64,5 +78,8 @@ class WebServer(object):
             self.RespondRequest()
 
 if __name__ == '__main__':
+    print("starting webserver")
+    Database = SQL.connect("bot.db")
     a = WebServer()
+    a.defaultCursor = Database.cursor()
     a.MainLoop(False)

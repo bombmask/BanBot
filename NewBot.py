@@ -7,6 +7,8 @@ import datetime
 import json
 import requests
 import time
+import BotWeb
+import threading
 
 from command import Command, AwareCommand, PERMLEVEL as cmdPERMISSION
 import botUnifier
@@ -47,7 +49,7 @@ class BasicStats(EH.EventHandler):
 
 class KappaCommand(botUnifier.BotCommand):
     TYPE = EH.TEvent.PRIVMSG
-    COMMAND = AwareCommand("-","kc", [cmdPERMISSION.HOST,cmdPERMISSION.SUPERUSER,cmdPERMISSION.MOD])
+    COMMAND = AwareCommand("-","kc", requirements=[cmdPERMISSION.HOST,cmdPERMISSION.SUPERUSER,cmdPERMISSION.MOD])
 
     def Execute(self, ref, *message):
         if not self.bHasBeenAdded:
@@ -157,8 +159,11 @@ class TestWhisper(botUnifier.BotCommand):
 
 
 if __name__ == '__main__':
+    WebServer = BotWeb.WebServer()
 
     m = botUnifier.BotDB()
+    WebServer.AddMe(m)
+    WebServer.MainLoop()
 
     m.flags["write"] = True
     cProfile = Profile("bombmask", "OAUTHS")
