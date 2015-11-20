@@ -62,7 +62,7 @@ class WebServer(object):
 
 
 
-    def MainLoop(self, fork=False):
+    def MainLoop(self, fork=True):
         if fork:
 
             self.thread_object = threading.Thread(
