@@ -164,11 +164,11 @@ if __name__ == '__main__':
     WebServer = BotWeb.WebServer()
 
     m = botUnifier.BotDB()
-    WebServer.AddMe(m)
+    BotWeb.SimpleDBResponder.DATABASETMPLINK = m.dbConn
     WebServer.MainLoop()
 
     m.flags["write"] = True
-    cProfile = Profile("bombmask", "OAUTHS")
+    cProfile = Profile("TheMaskOfTruth", "OAUTHS")
     m.username = cProfile.name
     m.password = cProfile.password
     m.pairTwitch = ("irc.twitch.tv", 6667)
@@ -199,6 +199,7 @@ if __name__ == '__main__':
         pass
 
     m.Stop()
+
     # twitch = IRCT.IRC_DB()
     #
     # twitch.Register(BasicBanEvent )

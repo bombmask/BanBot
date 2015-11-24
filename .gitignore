@@ -69,3 +69,6 @@ PyramidBreaker.py
 
 # Database
 *.db
+
+# CertFiles
+server.*

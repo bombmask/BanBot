@@ -5,10 +5,12 @@ import twitchtools.chat.EventHandler as EH
 import sqlite3 as sql
 import requests
 from enum import Enum
+
 class SERVER(Enum):
     BOTH = 0
     WHISPER = 1
     TMI = 2
+
 class BotCommand(EH.EventHandler):
     bHasBeenAdded = False
     SType = SERVER.BOTH
@@ -108,7 +110,7 @@ class BotBase(object):
 class BotDB(BotBase):
     def __init__(self, DBName="bot.db"):
         super().__init__()
-        self.dbConn = sql.connect(DBName)
+        self.dbConn = sql.connect(DBName, check_same_thread=False)
 
         self.dftCursor = self.dbConn.cursor()
         self.CreateTable("chatdata", "User TEXT, Raw TEXT, Time DATE, Event INT, Channel TEXT, Message TEXT")
