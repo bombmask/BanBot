@@ -1,3 +1,4 @@
+import datetime
 import socket
 import ssl
 import threading
@@ -78,6 +79,7 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
 class WebServer(object):
 
     def __init__(self):
+        print("Created Webserver Object at {}".format(datetime.datetime.now()))
         self.ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         self.ctx.load_cert_chain(certfile="server.crt", keyfile="server.key")
         self.httpd = http.HTTPServer(("0.0.0.0", 4443), SimpleDBResponder)
@@ -89,6 +91,7 @@ class WebServer(object):
         self.httpd.serve_forever()
 
     def MainLoop(self, fork=True):
+        print("Starting webserver at {} serving on {}".format(datetime.datetime.now(), self.httpd.server_address))
         if fork:
 
             self.thread_object = threading.Thread(
