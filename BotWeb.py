@@ -13,6 +13,8 @@ class WebServer(object):
         self.ref = ref
         self.defaultCursor = ref.dbConn.cursor()
 
+
+
     def RespondRequest(self):
         while(True):
             self.link.listen(1)

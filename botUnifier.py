@@ -29,7 +29,8 @@ class logDBAll(BotCommand):
 
     def Execute(self, ref, *message):
         try:
-            self.BOT.dftCursor.execute(
+            cursor = self.BOT.GetCursor()
+            cursor.execute(
                 "INSERT INTO chatdata VALUES (?,?,?,?,?,?)",
                 (
                     ref.tMessage.prefix.split('!')[0],
@@ -40,7 +41,8 @@ class logDBAll(BotCommand):
                     ref.tMessage.GetMessage()
                 )
             )
-            self.BOT.dbConn.commit()
+            self.BOT.Commit()
+            cursor.close()
 
         except sql.Error as E:
             print("An Error occured:",E.args[0])
@@ -116,6 +118,13 @@ class BotDB(BotBase):
 
         self.Register(logDBAll)
         self.Register(printAll)
+
     def CreateTable(self, tableName, typeString):
         executeString = "create table if not exists {} ({})".format(tableName, typeString)
         self.dftCursor.execute(executeString)
+
+    def GetCursor(self):
+        return self.dbConn.cursor()
+
+    def Commit(self):
+        self.dbConn.commit()

@@ -24,11 +24,13 @@ class BasicBanEvent(EH.EventHandler):
     def Execute(cls, ref, *message):
         data = ref.ChannelData(message[1].params[0])
         data.banAmount += 1
-
-        ref.dftCursor.execute(
+        cursor = ref.GetCursor()
+        cursor.execute(
             "INSERT INTO bans VALUES (?,?,?)",
             (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), message[1].GetMessage(), False)
         )
+        self.BOT.Commit()
+        cursor.close()
 
     @classmethod
     def Once(cls, ref):
@@ -179,6 +181,8 @@ if __name__ == '__main__':
 
     m.tagsAll = ["twitch.tv/tags", "twitch.tv/commands"]
 
+    m.twitchLink.RegisterClass(JoinCommand)
+    m.twitchLink.RegisterClass(LeaveCommand)
     m.Register(TestWhisper)
     m.Register(KappaCommand)
 
