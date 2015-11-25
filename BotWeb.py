@@ -89,7 +89,7 @@ class WebServer(object):
 
     def RespondRequest(self):
         self.httpd.serve_forever()
-
+        
     def MainLoop(self, fork=True):
         print("Starting webserver at {} serving on {}".format(datetime.datetime.now(), self.httpd.server_address))
         if fork:
