@@ -18,7 +18,7 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
     def fourohfourResponse(s):
         s.send_response(404)
         s.send_header(B("Content-type"), B("text/plain"))
-        s.send_header(B("Access-Control-Allow-Origin", B("*")))
+        s.send_header(B("Access-Control-Allow-Origin"), B("*")))
         s.end_headers()
         s.wfile.write(B("<html><head><title>404</title></head>"))
         s.wfile.write(B("<body><p>That Page Does Not Exist</p>"))
@@ -61,7 +61,7 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
 
             if len(userData["messages"]) != 0:
                 s.send_response(200)
-                s.send_header(B("Access-Control-Allow-Origin", B("*")))
+                s.send_header(B("Access-Control-Allow-Origin"), B("*")))
                 s.send_header(B("Content-type"), B("text/json"))
                 s.send_header(B("Connection"), B("close"))
                 s.end_headers()
@@ -70,7 +70,7 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
 
             else: #404
                 s.send_response(404)
-                s.send_header(B("Access-Control-Allow-Origin", B("*")))
+                s.send_header(B("Access-Control-Allow-Origin"), B("*")))
                 s.send_header(B("Content-type"), B("text/json"))
                 s.end_headers()
                 #Send User not found data
