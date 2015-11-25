@@ -59,7 +59,7 @@ class KappaCommand(botUnifier.BotCommand):
 
         tm = message[1]
         if self.COMMAND.Test(tm):
-            self.Configure(tm)
+            self.Configure(ref, tm)
             return #Don't check for banned words
 
         splicedMessage = tm.GetMessage().split(' ')
@@ -84,7 +84,7 @@ class KappaCommand(botUnifier.BotCommand):
         if ref.ChannelData().purgeAmount % ref.ChannelData().PublicSpeak:
             ref.PrivateMessage(tm.params[0], ref.ChannelData().kMessage)
 
-    def Configure(self, message):
+    def Configure(self, ref, message):
         # Execute command for mod, super user, or owner
         # Configure section
         parts = message.GetMessage().split(" ")[1:]
