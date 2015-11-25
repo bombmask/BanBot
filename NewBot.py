@@ -89,16 +89,34 @@ class KappaCommand(botUnifier.BotCommand):
         # Configure section
         parts = message.GetMessage().split(" ")[1:]
         if parts[0] == "ban":
-            ref.ChannelData().bannedWords.update(parts[1:])
+            if parts[1] == "-help":
+                ref.PrivateMessage(tm.params[0], "Usage: {} ban <list of space separated words> = Lists banned word".format(self.COMMAND.GetCommand())
+            else:
+                ref.ChannelData().bannedWords.update(parts[1:])
+
+        elif parts[0] == "unban":
+            if parts[1] == "-help":
+                ref.PrivateMessage(tm.params[0], "Usage: {} unban <list of space separated words> = Unlists old banned word".format(self.COMMAND.GetCommand())
+            else:
+                ref.ChannelData().bannedWords.difference_update(parts[1:])
 
         elif parts[0] == "message":
-            ref.ChannelData().kMessage = " ".join(parts[1:])
+            if parts[1] == "-help":
+                ref.PrivateMessage(tm.params[0], "Usage: {} message <New Whisper/Public Message>".format(self.COMMAND.GetCommand())
+            else:
+                ref.ChannelData().kMessage = " ".join(parts[1:])
 
         elif parts[0] == "time":
-            ref.ChannelData().timeCurve = "".join(parts[1:])
+            if parts[1] == "-help":
+                ref.PrivateMessage(tm.params[0], "Usage: {} time <formula with {times} provided> = Amount of seconds to timeout user".format(self.COMMAND.GetCommand())
+            else:
+                ref.ChannelData().timeCurve = " ".join(parts[1:])
 
         elif parts[0] == "list":
-            ref.PrivateMessage(message.params[0],*ref.ChannelData().bannedWords)
+            if parts[1] == "-help":
+                ref.PrivateMessage(tm.params[0], "Usage: {} list : Lists banned words".format(self.COMMAND.GetCommand())
+            else:
+                ref.PrivateMessage(message.params[0],*ref.ChannelData().bannedWords)
 
     @classmethod
     def Once(cls, ref):

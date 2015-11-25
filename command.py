@@ -24,6 +24,9 @@ class Command(object):
         if not self.Test(self.prefix+self.command):
             print('Command Test did not Succeed...')
 
+    def GetCommand(self):
+        return self.prefix+self.command
+        
     def Reinit(self):
         if self.DEBUG:
             self.prefix = self.prefix*2
@@ -93,7 +96,7 @@ class AwareCommand(Command):
                 else:
                     # User does not have permissions
                     return False
-                    
+
             return True
 
         else: #weird failover
