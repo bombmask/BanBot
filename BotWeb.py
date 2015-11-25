@@ -7,7 +7,7 @@ import sqlite3 as SQL
 import http.server as http
 
 #simple bytes lambda wrapper
-B = lambda x: x
+B = lambda x: bytes(x, "UTF-8")
 
 class SimpleDBResponder(http.BaseHTTPRequestHandler):
     DATABASETMPLINK = None
@@ -17,8 +17,8 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
 
     def fourohfourResponse(s):
         s.send_response(404)
-        s.send_header(B("Access-Control-Allow-Origin"), B("*"))
-        s.send_header(B("Content-type"), B("text/plain"))
+        s.send_header("Access-Control-Allow-Origin", "*")
+        s.send_header("Content-type", "text/plain")
         s.end_headers()
         s.wfile.write(B("<html><head><title>404</title></head>"))
         s.wfile.write(B("<body><p>That Page Does Not Exist</p>"))
@@ -61,17 +61,17 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
 
             if len(userData["messages"]) != 0:
                 s.send_response(200)
-                s.send_header(B("Access-Control-Allow-Origin"), B("*"))
-                s.send_header(B("Content-type"), B("text/json"))
-                s.send_header(B("Connection"), B("close"))
+                s.send_header("Access-Control-Allow-Origin", "*")
+                s.send_header("Content-type", "text/json")
+                s.send_header("Connection", "close")
                 s.end_headers()
                 # Send User Message data
                 s.wfile.write(B(json.dumps(userData)))
 
             else: #404
                 s.send_response(404)
-                s.send_header(B("Access-Control-Allow-Origin"), B("*"))
-                s.send_header(B("Content-type"), B("text/json"))
+                s.send_header("Access-Control-Allow-Origin", "*")
+                s.send_header("Content-type", "text/json")
                 s.end_headers()
                 #Send User not found data
                 #s.wfile.write(B(json.dumps()))
