@@ -81,7 +81,7 @@ class KappaCommand(botUnifier.BotCommand):
 
         self.BOT.Whisper(tm.GetTags()["display-name"], ref.ChannelData().kMessage)
 
-        if ref.ChannelData().purgeAmount % ref.ChannelData().PublicSpeak:
+        if ref.ChannelData().purgeAmount % ref.ChannelData().PublicSpeak == 0:
             ref.PrivateMessage(tm.params[0], ref.ChannelData().kMessage)
 
     def Configure(self, ref, message):
@@ -104,6 +104,9 @@ class KappaCommand(botUnifier.BotCommand):
             # if parts[1] == "-help":
             #     ref.PrivateMessage(tm.params[0], "Usage: {} message <New Whisper/Public Message>".format(self.COMMAND.GetCommand()))
             # else:
+            if not len(parts) >= 2:
+                ref.PrivateMessage(message.params[0], str(ref.ChannelData().kMessage))
+                return
             ref.ChannelData().kMessage = " ".join(parts[1:])
 
         elif parts[0] == "time":
@@ -118,10 +121,16 @@ class KappaCommand(botUnifier.BotCommand):
             # else:
             ref.PrivateMessage(message.params[0],*ref.ChannelData().bannedWords)
 
+        elif parts[0] == "speak":
+            if not len(parts) >= 2:
+                ref.PrivateMessage(message.params[0], str(ref.ChannelData().PublicSpeak))
+                return
+            ref.ChannelData().PublicSpeak = int(parts[1])
+
     @classmethod
     def Once(cls, ref):
         CS.ChannelData.PublicSpeak = 10
-        CS.ChannelData.kMessage = ""
+        CS.ChannelData.kMessage = "<No Message Set>"
         CS.ChannelData.purgeAmount = 0
         CS.ChannelData.bannedWords = set()
         CS.ChannelData.timeCurve = "300*{times}+10"
