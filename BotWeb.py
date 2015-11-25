@@ -7,7 +7,7 @@ import sqlite3 as SQL
 import http.server as http
 
 #simple bytes lambda wrapper
-B = lambda x: bytes(x, "UTF-8")
+B = lambda x: x
 
 class SimpleDBResponder(http.BaseHTTPRequestHandler):
     DATABASETMPLINK = None
@@ -17,8 +17,8 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
 
     def fourohfourResponse(s):
         s.send_response(404)
-        s.send_header(B("Content-type"), B("text/plain"))
         s.send_header(B("Access-Control-Allow-Origin"), B("*"))
+        s.send_header(B("Content-type"), B("text/plain"))
         s.end_headers()
         s.wfile.write(B("<html><head><title>404</title></head>"))
         s.wfile.write(B("<body><p>That Page Does Not Exist</p>"))
