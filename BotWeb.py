@@ -18,7 +18,7 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
     def fourohfourResponse(s):
         s.send_response(404)
         s.send_header("Access-Control-Allow-Origin", "*")
-        s.send_header("Content-type", "text/plain")
+        s.send_header("Content-type", "text/html")
         s.end_headers()
         s.wfile.write(B("<html><head><title>404</title></head>"))
         s.wfile.write(B("<body><p>That Page Does Not Exist</p>"))
@@ -52,12 +52,26 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
                 return
 
             c = s.GetDatabaseCursor()
-            c.execute("SELECT Time, Channel, Message FROM chatdata WHERE user=? ORDER BY Time ASC",(user.lower(),))
+            cc = s.GetDatabaseCursor()
 
-            userData = {"username":user, "messages":[]}
+            c.execute("SELECT Time, Channel, Message FROM chatdata WHERE user=? ORDER BY Time ASC",(user.lower(),))
+            cc.execute("SELECT Time, Channel FROM bans WHERE user=? ORDER BY Time ASC",(user.lower(),))
+
+            userData = {"username":user, "banned":0, "messages":[]}
+            banData = cc.fetchall()
 
             for message in c.fetchall():
-                userData["messages"].append({"time":message[0], "channel":message[1], "message":message[2]})
+                userData["messages"].append({"type":"message", "time":message[0], "channel":message[1], "message":message[2]})
+
+            userData["banned"] = len(banData)
+            for ban in banData:
+                userData["messages"].append({"type":"ban", "time":ban[0], "channel":ban[1]})
+
+            userData["messages"].sort(key=lambda x:x["time"])
+
+
+            c.close()
+            cc.close()
 
             if len(userData["messages"]) != 0:
                 s.send_response(200)
@@ -77,6 +91,8 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
                 #s.wfile.write(B(json.dumps()))
 
             return
+
+
         s.fourohfourResponse()
 
 class WebServer(object):
@@ -117,62 +133,3 @@ if __name__ == '__main__':
     a = WebServer()
     a.defaultCursor = Database.cursor()
     a.MainLoop(False)
-
-"""
-while(True):
-    self.link.listen(3)
-    conn,addr = self.link.accept()
-    connstream = self.ctx.wrap_socket(conn, server_side=True)
-
-    #a = connstream.recv(4096).decode("UTF-8").split("\r\n")
-    dataraw = connstream.recv(4096).decode("UTF-8")
-    datastream = dataraw.split('\r\n')
-    try:
-        # Print Receveing message to console
-        for line in datastream:
-            print(line)
-
-        # Retrive the data request, close the connection on error
-        dataRequest = datastream[0].split(' ',2)[1]
-
-        # get user variable from request
-        keypairs = dataRequest.split("?",1)[1].split("&")
-
-        for keyvalue in keypairs:
-            # Split only if found the right key
-            if keyvalue.startswith("user"):
-                user = i.split('=')[1]
-                break
-
-        print("requested user data:"+user)
-
-        self.defaultCursor.execute()
-
-        userData = {"username":user, "messages":[]}
-
-        for message in self.defaultCursor.fetchall():
-            userData["messages"].append({"time":message[0], "channel":message[1], "message":message[2]})
-
-        sendString = ""
-        print(len(userData["messages"]))
-        if len(userData["messages"]) != 0:
-            sendData = json.dumps(userData)
-            sendString = "HTTP/1.1 200 OK\r\nConnection: close\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: {length}\r\nContent-Type: text/json\r\n\r\n{Body}".format(
-                    length=len(sendData),
-                    Body=sendData
-                )
-        else:
-            sendString = "HTTP/1.1 404 Not Found\r\nConnection: close\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\nContent-Type: text/json\r\n\r\n"
-
-        connstream.sendall(bytes(sendString,"UTF-8"))
-
-    except Exception as E:
-        print("main exception")
-        print(E)
-        print(dataraw)
-
-    finally:
-        connstream.shutdown(socket.SHUT_RDWR)
-        connstream.close()
-        print("closed the server connection")
-"""

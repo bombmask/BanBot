@@ -26,15 +26,15 @@ class BasicBanEvent(EH.EventHandler):
         data.banAmount += 1
         cursor = ref.GetCursor()
         cursor.execute(
-            "INSERT INTO bans VALUES (?,?,?)",
-            (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), message[1].GetMessage(), False)
+            "INSERT INTO bans VALUES (?,?,?,?)",
+            (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), message[1].GetMessage(), False, message[1].params[0][1:])
         )
         self.BOT.Commit()
         cursor.close()
 
     @classmethod
     def Once(cls, ref):
-        ref.CreateTable("bans", "Time TEXT, User TEXT, Us BOOL DEFAULT true")
+        ref.CreateTable("bans", "Time TEXT, User TEXT, Us BOOL DEFAULT true, Channel TEXT DEFAULT undefined")
         CS.ChannelData.banAmount = 0
 
 class BasicStats(EH.EventHandler):
@@ -185,7 +185,9 @@ class TestWhisper(botUnifier.BotCommand):
 
         self.BOT.Whisper(msg[1].GetTags().get("display-name", "bombmask"), "Hello world!")
 
-
+class CustomCommand(botUnifier.BotCommand):
+    TYPE = EH.TEvent.PRIVMSG
+    COMMAND = Command(":", "new", argparse=True)
 
 if __name__ == '__main__':
     WebServer = BotWeb.WebServer()
@@ -195,7 +197,7 @@ if __name__ == '__main__':
     WebServer.MainLoop()
 
     m.flags["write"] = True
-    cProfile = Profile("TheMaskOfTruth", "OAUTHS")
+    cProfile = Profile("bomb_mask", "OAUTHS")
     m.username = cProfile.name
     m.password = cProfile.password
     m.pairTwitch = ("irc.twitch.tv", 6667)

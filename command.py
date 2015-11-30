@@ -26,7 +26,7 @@ class Command(object):
 
     def GetCommand(self):
         return self.prefix+self.command
-        
+
     def Reinit(self):
         if self.DEBUG:
             self.prefix = self.prefix*2
@@ -98,6 +98,43 @@ class AwareCommand(Command):
                     return False
 
             return True
+
+        else: #weird failover
+            super().TestNormal(tm)
+
+    def TestArgparse(self, msgStr):
+        if self.DEBUG:
+            print(tm.GetMessage())
+
+        if isinstance(tm, MM.Message):
+
+            if not tm.GetMessage().startswith(self.prefix):
+                return False
+
+            if not tm.GetMessage()[len(self.prefix):].startswith(self.command):
+                return False
+
+            if self.requirements[0] != PERMLEVEL.ALL:
+                for PERM in self.requirements:
+                    if PERM == PERMLEVEL.HOST:
+                        if tm.GetTags()["display-name"].lower() == tm.params[0][1:].lower():
+                            #Found the host :D
+                            break
+                    elif PERM == PERMLEVEL.SUPERUSER:
+                        if tm.GetTags()["display-name"].lower() in self.SUPERUSERS:
+                            #Found the superuser
+                            break
+
+                    else:
+                        if PERM == tm.GetTags()["user-type"]:
+                            # User can use command
+                            break
+
+                else:
+                    # User does not have permissions
+                    return False
+
+            return self.argparse.parse_args()
 
         else: #weird failover
             super().TestNormal(tm)
