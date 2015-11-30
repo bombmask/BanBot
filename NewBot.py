@@ -185,9 +185,6 @@ class TestWhisper(botUnifier.BotCommand):
 
         self.BOT.Whisper(msg[1].GetTags().get("display-name", "bombmask"), "Hello world!")
 
-class CustomCommand(botUnifier.BotCommand):
-    TYPE = EH.TEvent.PRIVMSG
-    COMMAND = Command(":", "new", argparse=True)
 
 if __name__ == '__main__':
     WebServer = BotWeb.WebServer()
