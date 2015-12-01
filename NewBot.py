@@ -13,7 +13,7 @@ import threading
 from command import Command, AwareCommand, PERMLEVEL as cmdPERMISSION
 import botUnifier
 # Example classes
-Command.DEBUG = True
+
 
 superUsers = ["bomb_mask"]
 
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     WebServer.MainLoop()
 
     m.flags["write"] = True
-    cProfile = Profile("bombmask", "OAUTHS")
+    cProfile = Profile("TheMaskOfTruth", "OAUTHS")
     m.username = cProfile.name
     m.password = cProfile.password
     m.pairTwitch = ("irc.twitch.tv", 6667)
