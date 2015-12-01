@@ -13,41 +13,31 @@ import threading
 from command import Command, AwareCommand, PERMLEVEL as cmdPERMISSION
 import botUnifier
 # Example classes
+Command.DEBUG = True
 
 superUsers = ["bomb_mask"]
 
 
-class BasicBanEvent(EH.EventHandler):
+class BasicBanEvent(botUnifier.BotCommand):
     TYPE = EH.TEvent.CLEARCHAT
+    SType = botUnifier.SERVER.TMI
 
-    @classmethod
-    def Execute(cls, ref, *message):
+    def Execute(self, ref, *message):
         data = ref.ChannelData(message[1].params[0])
         data.banAmount += 1
-        cursor = ref.GetCursor()
+        cursor = self.BOT.GetCursor()
         cursor.execute(
             "INSERT INTO bans VALUES (?,?,?,?)",
-            (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), message[1].GetMessage(), False, message[1].params[0][1:])
+            (datetime.datetime.now(), message[1].GetMessage(), False, message[1].params[0][1:])
         )
         self.BOT.Commit()
         cursor.close()
 
-    @classmethod
-    def Once(cls, ref):
-        ref.CreateTable("bans", "Time TEXT, User TEXT, Us BOOL DEFAULT true, Channel TEXT DEFAULT undefined")
+
+    def Once(self, ref):
+        self.BOT.CreateTable("bans", "Time DATE, User TEXT, Us BOOL DEFAULT true, Channel TEXT DEFAULT undefined")
         CS.ChannelData.banAmount = 0
 
-class BasicStats(EH.EventHandler):
-    TYPE = EH.TEvent.PRIVMSG
-
-    @classmethod
-    def Execute(cls, ref, *message):
-        if message[1].GetMessage().lower() == "-hi" and tm.GetTags().get("display-name").lower() in superUsers:
-            ref.PrivateMessage(message[1].params[0][1:], ref.ChannelData(message[1].params[0]).banAmount)
-
-    @classmethod
-    def Once(cls, ref):
-        pass
 
 class KappaCommand(botUnifier.BotCommand):
     TYPE = EH.TEvent.PRIVMSG
@@ -78,6 +68,17 @@ class KappaCommand(botUnifier.BotCommand):
 
         USER.bannedWordCount += 1
         ref.ChannelData().purgeAmount += 1
+
+        # Insert data into Database
+        cursor = self.BOT.GetCursor()
+        cursor.execute(
+            "INSERT INTO bans VALUES (?,?,?,?)",
+            (datetime.datetime.now(), message[1].GetTags()["display-name"].lower(), True, message[1].params[0][1:])
+        )
+
+        self.BOT.Commit()
+        cursor.close()
+        #Done
 
         self.BOT.Whisper(tm.GetTags()["display-name"], ref.ChannelData().kMessage)
 
@@ -194,15 +195,17 @@ if __name__ == '__main__':
     WebServer.MainLoop()
 
     m.flags["write"] = True
-    cProfile = Profile("bomb_mask", "OAUTHS")
+    cProfile = Profile("bombmask", "OAUTHS")
     m.username = cProfile.name
     m.password = cProfile.password
     m.pairTwitch = ("irc.twitch.tv", 6667)
+
     """
     ["199.9.253.119","199.9.253.120", "10.1.222.247","192.16.64.213",
     "192.16.64.182", "199.9.255.149", "192.16.64.173", "199.9.255.148",
     "192.16.64.181", "199.9.255.146", "92.16.64.214", "199.9.255.147"]
     """
+
     m.pairWhisper = ("199.9.253.119", 6667)
 
     m.tagsAll = ["twitch.tv/tags", "twitch.tv/commands"]
@@ -211,6 +214,7 @@ if __name__ == '__main__':
     m.twitchLink.RegisterClass(LeaveCommand)
     m.Register(TestWhisper)
     m.Register(KappaCommand)
+    m.Register(BasicBanEvent)
 
     m.Start()
 
@@ -225,31 +229,3 @@ if __name__ == '__main__':
         pass
 
     m.Stop()
-
-    # twitch = IRCT.IRC_DB()
-    #
-    # twitch.Register(BasicBanEvent )
-    # twitch.Register(JoinCommand)
-    # twitch.Register(LeaveCommand)
-    #
-    #
-    # twitch.flags["write"] = True
-    # cProfile = Profile("bombmask")
-    # twitch.username = cProfile.name
-    # twitch.password = cProfile.password
-    # twitch.serverPair = ("irc.twitch.tv", 6667)
-    # twitch.Start()
-    # twitch.Request("twitch.tv/tags")
-    # twitch.Request("twitch.tv/commands")
-    #
-    #
-    # twitch.Join("bomb_mask")
-    #
-    #
-    # #print("entering mainloop")
-    # try:
-    #     twitch.MainLoop()
-    # except KeyboardInterrupt as E:
-    #     pass
-    #
-    # twitch.Close()

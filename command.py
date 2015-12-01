@@ -20,7 +20,7 @@ class Command(object):
 
         self.argparse = argparse
         self.regex = commandIsRegex
-
+        self.Reinit()
         if not self.Test(self.prefix+self.command):
             print('Command Test did not Succeed...')
 
@@ -66,10 +66,10 @@ class AwareCommand(Command):
         self.requirements = requirements
 
     def TestNormal(self, tm):
-        if self.DEBUG:
-            print(tm.GetMessage())
 
         if isinstance(tm, MM.Message):
+            if self.DEBUG:
+                print(tm.GetMessage())
 
             if not tm.GetMessage().startswith(self.prefix):
                 return False

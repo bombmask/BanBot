@@ -53,8 +53,8 @@ class BotBase(object):
 
     def __init__(self):
 
-        self.twitchLink = IRC.IRC_Twitch()
-        self.whisperLink = IRC.IRC_Twitch()
+        self.twitchLink = IRC.IRC_Twitch(self)
+        self.whisperLink = IRC.IRC_Twitch(self)
 
         self.servers = [self.twitchLink, self.whisperLink]
 
@@ -114,12 +114,18 @@ class BotDB(BotBase):
 
         self.dftCursor = self.dbConn.cursor()
         self.CreateTable("chatdata", "User TEXT, Raw TEXT, Time DATE, Event INT, Channel TEXT, Message TEXT")
-        self.CreateTable("config", "Channel TEXT, Data TEXT")
+        self.CreateTable("config", "channel TEXT, json TEXT")
 
         print("Current SQLite Version: ", sql.sqlite_version)
 
         self.Register(logDBAll)
         self.Register(printAll)
+
+    def Load(self):
+        pass
+
+    def Save(self):
+        pass
 
     def CreateTable(self, tableName, typeString):
         executeString = "create table if not exists {} ({})".format(tableName, typeString)
