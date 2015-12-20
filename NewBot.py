@@ -110,7 +110,7 @@ class KappaCommand(botUnifier.BotCommand):
                 if parts[1] == "-help":
                     ref.PrivateMessage(message.params[0], "Usage: {} message <New Whisper/Public Message>".format(self.COMMAND.GetCommand()))
                     return
-                    
+
             if not len(parts) >= 2:
                 ref.PrivateMessage(message.params[0], str(ref.ChannelData().kMessage))
                 return
@@ -228,7 +228,7 @@ if __name__ == '__main__':
 
     m.twitchLink.RegisterClass(JoinCommand)
     m.twitchLink.RegisterClass(LeaveCommand)
-    m.Register(TestWhisper)
+
     m.Register(KappaCommand)
     m.Register(BasicBanEvent)
 
