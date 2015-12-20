@@ -82,7 +82,7 @@ class KappaCommand(botUnifier.BotCommand):
 
         self.BOT.Whisper(tm.GetTags()["display-name"], ref.ChannelData().kMessage)
 
-        if ref.ChannelData().purgeAmount % ref.ChannelData().PublicSpeak == 0 and ref.ChannelData().purgeAmount != -1:
+        if ref.ChannelData().purgeAmount % ref.ChannelData().PublicSpeak == 0 and ref.ChannelData().PublicSpeak != -1:
             ref.PrivateMessage(tm.params[0], ref.ChannelData().kMessage)
 
     def Configure(self, ref, message):
