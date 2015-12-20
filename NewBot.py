@@ -93,9 +93,7 @@ class KappaCommand(botUnifier.BotCommand):
             if len(parts) >= 2:
                 if parts[1] == "-help":
                     ref.PrivateMessage(message.params[0], "Usage: {} ban <list of space separated words> = Lists banned word".format(self.COMMAND.GetCommand()))
-                else:
-                    ref.PrivateMessage(message.params[0], "Usage: {} ban <list of space separated words> = Lists banned word".format(self.COMMAND.GetCommand()))
-                return
+                    return
 
             ref.ChannelData().bannedWords.update(parts[1:])
 
@@ -103,9 +101,7 @@ class KappaCommand(botUnifier.BotCommand):
             if len(parts) >= 2:
                 if parts[1] == "-help":
                     ref.PrivateMessage(message.params[0], "Usage: {} unban <list of space separated words> = Unlists old banned word".format(self.COMMAND.GetCommand()))
-                else:
-                    ref.PrivateMessage(message.params[0], "Usage: {} unban <list of space separated words> = Unlists old banned word".format(self.COMMAND.GetCommand()))
-                return
+                    return
 
             ref.ChannelData().bannedWords.difference_update(parts[1:])
 
@@ -113,20 +109,18 @@ class KappaCommand(botUnifier.BotCommand):
             if len(parts) >= 2:
                 if parts[1] == "-help":
                     ref.PrivateMessage(message.params[0], "Usage: {} message <New Whisper/Public Message>".format(self.COMMAND.GetCommand()))
-
-                else:
-                    ref.PrivateMessage(message.params[0], str(ref.ChannelData().kMessage))
-
-                return
+                    return
 
             ref.ChannelData().kMessage = " ".join(parts[1:])
 
         elif parts[0] == "time":
-            if len(parts) >= 2:
+            if len(parts) == 2:
                 if parts[1] == "-help":
                     ref.PrivateMessage(message.params[0], "Usage: {} time <formula with \{times\} provided> = Amount of seconds to timeout user".format(self.COMMAND.GetCommand()))
-                else:
-                    ref.PrivateMessage(message.params[0], str(ref.ChannelData().timeCurve))
+                    return
+
+            if not len(parts) >= 2:
+                ref.PrivateMessage(message.params[0], str(ref.ChannelData().timeCurve))
                 return
 
             ref.ChannelData().timeCurve = " ".join(parts[1:])
