@@ -52,6 +52,9 @@ class KappaCommand(botUnifier.BotCommand):
             self.Configure(ref, tm)
             return #Don't check for banned words
 
+        if not ref.ChannelData().KappaCommandEnabled:
+            return
+
         splicedMessage = tm.GetMessage().split(' ')
 
         for word in ref.ChannelData(tm.params[0]).bannedWords:
@@ -144,14 +147,24 @@ class KappaCommand(botUnifier.BotCommand):
 
             ref.ChannelData().PublicSpeak = int(parts[1])
 
+        elif parts[0] == "enabled":
+            if not len(parts) >= 2:
+                ref.PrivateMessage(message.params[0], str(ref.ChannelData().KappaCommandEnabled))
+                return
+            else:
+                ref.ChannelData().KappaCommandEnabled = not ref.ChannelData().KappaCommandEnabled
+                ref.PrivateMessage(message.params[0], "Command is now set to {}".format(ref.ChannelData().KappaCommandEnabled))
+
     @classmethod
     def Once(cls, ref):
+        CS.ChannelData.KappaCommandEnabled = True
         CS.ChannelData.PublicSpeak = 10
         CS.ChannelData.kMessage = "<No Message Set>"
         CS.ChannelData.purgeAmount = 0
         CS.ChannelData.bannedWords = set()
         CS.ChannelData.timeCurve = "300*{times}+10"
         CS.UserData.bannedWordCount = 0
+
 
         #ref.CreateTable("UserData", "User TEXT, Channel TEXT, DATA TEXT")
 
@@ -234,7 +247,7 @@ if __name__ == '__main__':
 
     m.Start()
 
-    m.twitchLink.Join("bomb_mask")
+    m.twitchLink.Join(cProfile.name)
 
     m.whisperLink.MainLoop(fork=True)
 
