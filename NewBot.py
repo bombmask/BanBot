@@ -224,7 +224,7 @@ if __name__ == '__main__':
     WebServer.MainLoop()
 
     m.flags["write"] = True
-    cProfile = Profile("TheMaskOfTruth", "OAUTHS")
+    cProfile = Profile("TheMaskOfTruth", "config")
     m.username = cProfile.name
     m.password = cProfile.password
     m.pairTwitch = ("irc.twitch.tv", 6667)

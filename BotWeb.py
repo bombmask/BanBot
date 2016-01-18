@@ -128,7 +128,7 @@ class WebServer(object):
 
 if __name__ == '__main__':
     print("starting webserver")
-    Database = SQL.connect("bot.db")
+    Database = SQL.connect("config/bot.db")
     SimpleDBResponder.DATABASETMPLINK = Database
     a = WebServer()
     a.defaultCursor = Database.cursor()

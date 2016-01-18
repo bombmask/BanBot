@@ -108,7 +108,7 @@ class BotBase(object):
         self.whisperLink.PrivateMessage("_themaskoftruth_1444811826692", "/w {} {}".format(user, " ".join(message)))
 
 class BotDB(BotBase):
-    def __init__(self, DBName="bot.db"):
+    def __init__(self, DBName="config/bot.db"):
         super().__init__()
         self.dbConn = sql.connect(DBName, check_same_thread=False)
 

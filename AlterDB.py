@@ -3,7 +3,7 @@ import sqlite3 as sql
 
 if __name__ == '__main__':
 
-    conn = sql.connect("bot.db")
+    conn = sql.connect("config/bot.db")
     cur = conn.cursor()
     #cur.execute("ALTER TABLE bans ALTER COLUMN Time DATE")
     cur.execute("SELECT * FROM bans")

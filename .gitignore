@@ -72,3 +72,7 @@ PyramidBreaker.py
 
 # CertFiles
 server.*
+
+# Config path
+config/
+
