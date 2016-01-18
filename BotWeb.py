@@ -100,7 +100,7 @@ class WebServer(object):
     def __init__(self):
         print("Created Webserver Object at {}".format(datetime.datetime.now()))
         self.ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        self.ctx.load_cert_chain(certfile="server.crt", keyfile="server.key")
+        self.ctx.load_cert_chain(certfile="config/server.crt", keyfile="config/server.key")
         self.httpd = http.HTTPServer(("0.0.0.0", 8443), SimpleDBResponder)
         self.httpd.socket = self.ctx.wrap_socket(self.httpd.socket, server_side=True)
         #self.link = socket.socket()
