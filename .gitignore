@@ -57,6 +57,22 @@ docs/_build/
 target/
 
 *.json
-channels.txt
+*.bak
+!cfg.json
 channels.txt
 PyramidBreaker.py
+
+
+# Visual Studio
+.vs/*
+*.pyproj
+
+# Database
+*.db
+
+# CertFiles
+server.*
+
+# Config path
+config/
+
