@@ -19,174 +19,174 @@ superUsers = ["bomb_mask"]
 
 
 class BasicBanEvent(botUnifier.BotCommand):
-    TYPE = EH.TEvent.CLEARCHAT
-    SType = botUnifier.SERVER.TMI
+	TYPE = EH.TEvent.CLEARCHAT
+	SType = botUnifier.SERVER.TMI
 
-    def Execute(self, ref, *message):
-        data = ref.ChannelData(message[1].params[0])
-        data.banAmount += 1
-        cursor = self.BOT.GetCursor()
-        cursor.execute(
-            "INSERT INTO bans VALUES (?,?,?,?)",
-            (datetime.datetime.now(), message[1].GetMessage(), False, message[1].params[0][1:])
-        )
-        self.BOT.Commit()
-        cursor.close()
+	def Execute(self, ref, *message):
+		data = ref.ChannelData(message[1].params[0])
+		data.banAmount += 1
+		cursor = self.BOT.GetCursor()
+		cursor.execute(
+			"INSERT INTO bans VALUES (?,?,?,?)",
+			(datetime.datetime.now(), message[1].GetMessage(), False, message[1].params[0][1:])
+		)
+		self.BOT.Commit()
+		cursor.close()
 
 
-    def Once(self, ref):
-        self.BOT.CreateTable("bans", "Time DATE, User TEXT, Us BOOL DEFAULT true, Channel TEXT DEFAULT undefined")
-        CS.ChannelData.banAmount = 0
+	def Once(self, ref):
+		self.BOT.CreateTable("bans", "Time DATE, User TEXT, Us BOOL DEFAULT true, Channel TEXT DEFAULT undefined")
+		CS.ChannelData.banAmount = 0
 
 
 class KappaCommand(botUnifier.BotCommand):
-    TYPE = EH.TEvent.PRIVMSG
-    COMMAND = AwareCommand("-","kc", requirements=[cmdPERMISSION.HOST,cmdPERMISSION.SUPERUSER,cmdPERMISSION.MOD])
+	TYPE = EH.TEvent.PRIVMSG
+	COMMAND = AwareCommand("-","kc", requirements=[cmdPERMISSION.HOST,cmdPERMISSION.SUPERUSER,cmdPERMISSION.MOD])
 
-    def Execute(self, ref, *message):
-        if not self.bHasBeenAdded:
-            raise RuntimeError("This command has not be pre registered")
+	def Execute(self, ref, *message):
+		if not self.bHasBeenAdded:
+			raise RuntimeError("This command has not be pre registered")
 
-        tm = message[1]
-        if self.COMMAND.Test(tm):
-            self.Configure(ref, tm)
-            return #Don't check for banned words
+		tm = message[1]
+		if self.COMMAND.Test(tm):
+			self.Configure(ref, tm)
+			return #Don't check for banned words
 
-        if not ref.ChannelData().KappaCommandEnabled:
-            return
+		if not ref.ChannelData().KappaCommandEnabled:
+			return
 
-        splicedMessage = tm.GetMessage().split(' ')
+		splicedMessage = tm.GetMessage().split(' ')
 
-        for word in ref.ChannelData(tm.params[0]).bannedWords:
-            if word in splicedMessage:
-                break
-        else:
-            return
+		for word in ref.ChannelData(tm.params[0]).bannedWords:
+			if word in splicedMessage:
+				break
+		else:
+			return
 
-        USER = ref.ChannelData().GetUser(tm.GetTags().get("display-name"))
+		USER = ref.ChannelData().GetUser(tm.GetTags().get("display-name"))
 
-        seconds = eval(ref.ChannelData().timeCurve.format(times=int(USER.bannedWordCount)))
+		seconds = eval(ref.ChannelData().timeCurve.format(times=int(USER.bannedWordCount)))
 
-        ref.PrivateMessage(tm.params[0][1:], "/timeout {} {}".format(tm.GetTags().get("display-name").lower(), seconds))
+		ref.PrivateMessage(tm.params[0][1:], "/timeout {} {}".format(tm.GetTags().get("display-name").lower(), seconds))
 
-        USER.bannedWordCount += 1
-        ref.ChannelData().purgeAmount += 1
+		USER.bannedWordCount += 1
+		ref.ChannelData().purgeAmount += 1
 
-        # Insert data into Database
-        cursor = self.BOT.GetCursor()
-        cursor.execute(
-            "INSERT INTO bans VALUES (?,?,?,?)",
-            (datetime.datetime.now(), message[1].GetTags()["display-name"].lower(), True, message[1].params[0][1:])
-        )
+		# Insert data into Database
+		cursor = self.BOT.GetCursor()
+		cursor.execute(
+			"INSERT INTO bans VALUES (?,?,?,?)",
+			(datetime.datetime.now(), message[1].GetTags()["display-name"].lower(), True, message[1].params[0][1:])
+		)
 
-        self.BOT.Commit()
-        cursor.close()
-        #Done
+		self.BOT.Commit()
+		cursor.close()
+		#Done
 
-        self.BOT.Whisper(tm.GetTags()["display-name"], ref.ChannelData().kMessage)
+		self.BOT.Whisper(tm.GetTags()["display-name"], ref.ChannelData().kMessage)
 
-        if ref.ChannelData().purgeAmount % ref.ChannelData().PublicSpeak == 0 and ref.ChannelData().PublicSpeak != -1:
-            ref.PrivateMessage(tm.params[0], ref.ChannelData().kMessage)
+		if ref.ChannelData().purgeAmount % ref.ChannelData().PublicSpeak == 0 and ref.ChannelData().PublicSpeak != -1:
+			ref.PrivateMessage(tm.params[0], ref.ChannelData().kMessage)
 
-    def Configure(self, ref, message):
-        # Execute command for mod, super user, or owner
-        # Configure section
-        parts = message.GetMessage().split(" ")[1:]
-        if parts[0] == "ban":
-            if len(parts) >= 2:
-                if parts[1] == "-help":
-                    ref.PrivateMessage(message.params[0], "Usage: {} ban <list of space separated words> = Lists banned word".format(self.COMMAND.GetCommand()))
-                    return
+	def Configure(self, ref, message):
+		# Execute command for mod, super user, or owner
+		# Configure section
+		parts = message.GetMessage().split(" ")[1:]
+		if parts[0] == "ban":
+			if len(parts) >= 2:
+				if parts[1] == "-help":
+					ref.PrivateMessage(message.params[0], "Usage: {} ban <list of space separated words> = Lists banned word".format(self.COMMAND.GetCommand()))
+					return
 
-            ref.ChannelData().bannedWords.update(parts[1:])
+			ref.ChannelData().bannedWords.update(parts[1:])
 
-        elif parts[0] == "unban":
-            if len(parts) >= 2:
-                if parts[1] == "-help":
-                    ref.PrivateMessage(message.params[0], "Usage: {} unban <list of space separated words> = Unlists old banned word".format(self.COMMAND.GetCommand()))
-                    return
+		elif parts[0] == "unban":
+			if len(parts) >= 2:
+				if parts[1] == "-help":
+					ref.PrivateMessage(message.params[0], "Usage: {} unban <list of space separated words> = Unlists old banned word".format(self.COMMAND.GetCommand()))
+					return
 
-            ref.ChannelData().bannedWords.difference_update(parts[1:])
+			ref.ChannelData().bannedWords.difference_update(parts[1:])
 
-        elif parts[0] == "message":
-            if len(parts) >= 2:
-                if parts[1] == "-help":
-                    ref.PrivateMessage(message.params[0], "Usage: {} message <New Whisper/Public Message>".format(self.COMMAND.GetCommand()))
-                    return
+		elif parts[0] == "message":
+			if len(parts) >= 2:
+				if parts[1] == "-help":
+					ref.PrivateMessage(message.params[0], "Usage: {} message <New Whisper/Public Message>".format(self.COMMAND.GetCommand()))
+					return
 
-            if not len(parts) >= 2:
-                ref.PrivateMessage(message.params[0], str(ref.ChannelData().kMessage))
-                return
+			if not len(parts) >= 2:
+				ref.PrivateMessage(message.params[0], str(ref.ChannelData().kMessage))
+				return
 
-            ref.ChannelData().kMessage = " ".join(parts[1:])
+			ref.ChannelData().kMessage = " ".join(parts[1:])
 
-        elif parts[0] == "time":
-            if len(parts) == 2:
-                if parts[1] == "-help":
-                    ref.PrivateMessage(message.params[0], "Usage: {} time <formula with \{times\} provided> = Amount of seconds to timeout user".format(self.COMMAND.GetCommand()))
-                    return
+		elif parts[0] == "time":
+			if len(parts) == 2:
+				if parts[1] == "-help":
+					ref.PrivateMessage(message.params[0], "Usage: {} time <formula with \{times\} provided> = Amount of seconds to timeout user".format(self.COMMAND.GetCommand()))
+					return
 
-            if not len(parts) >= 2:
-                ref.PrivateMessage(message.params[0], str(ref.ChannelData().timeCurve))
-                return
+			if not len(parts) >= 2:
+				ref.PrivateMessage(message.params[0], str(ref.ChannelData().timeCurve))
+				return
 
-            ref.ChannelData().timeCurve = " ".join(parts[1:])
+			ref.ChannelData().timeCurve = " ".join(parts[1:])
 
-        elif parts[0] == "list":
-            if len(parts) >= 2:
-                if parts[1] == "-help":
-                    ref.PrivateMessage(message.params[0], "Usage: {} list : Lists banned words".format(self.COMMAND.GetCommand()))
-                    return
+		elif parts[0] == "list":
+			if len(parts) >= 2:
+				if parts[1] == "-help":
+					ref.PrivateMessage(message.params[0], "Usage: {} list : Lists banned words".format(self.COMMAND.GetCommand()))
+					return
 
-            ref.PrivateMessage(message.params[0],*ref.ChannelData().bannedWords)
+			ref.PrivateMessage(message.params[0],*ref.ChannelData().bannedWords)
 
-        elif parts[0] == "speak":
-            if not len(parts) >= 2:
-                ref.PrivateMessage(message.params[0], str(ref.ChannelData().PublicSpeak))
-                return
+		elif parts[0] == "speak":
+			if not len(parts) >= 2:
+				ref.PrivateMessage(message.params[0], str(ref.ChannelData().PublicSpeak))
+				return
 
-            ref.ChannelData().PublicSpeak = int(parts[1])
+			ref.ChannelData().PublicSpeak = int(parts[1])
 
-        elif parts[0] == "enabled":
-            if not len(parts) >= 2:
-                ref.PrivateMessage(message.params[0], str(ref.ChannelData().KappaCommandEnabled))
-                return
-            else:
-                ref.ChannelData().KappaCommandEnabled = not ref.ChannelData().KappaCommandEnabled
-                ref.PrivateMessage(message.params[0], "Command is now set to {}".format(ref.ChannelData().KappaCommandEnabled))
+		elif parts[0] == "enabled":
+			if not len(parts) >= 2:
+				ref.PrivateMessage(message.params[0], str(ref.ChannelData().KappaCommandEnabled))
+				return
+			else:
+				ref.ChannelData().KappaCommandEnabled = not ref.ChannelData().KappaCommandEnabled
+				ref.PrivateMessage(message.params[0], "Command is now set to {}".format(ref.ChannelData().KappaCommandEnabled))
 
-    @classmethod
-    def Once(cls, ref):
-        CS.ChannelData.KappaCommandEnabled = True
-        CS.ChannelData.PublicSpeak = 10
-        CS.ChannelData.kMessage = "<No Message Set>"
-        CS.ChannelData.purgeAmount = 0
-        CS.ChannelData.bannedWords = set()
-        CS.ChannelData.timeCurve = "300*{times}+10"
-        CS.UserData.bannedWordCount = 0
+	@classmethod
+	def Once(cls, ref):
+		CS.ChannelData.KappaCommandEnabled = True
+		CS.ChannelData.PublicSpeak = 10
+		CS.ChannelData.kMessage = "<No Message Set>"
+		CS.ChannelData.purgeAmount = 0
+		CS.ChannelData.bannedWords = set()
+		CS.ChannelData.timeCurve = "300*{times}+10"
+		CS.UserData.bannedWordCount = 0
 
 
-        #ref.CreateTable("UserData", "User TEXT, Channel TEXT, DATA TEXT")
+		#ref.CreateTable("UserData", "User TEXT, Channel TEXT, DATA TEXT")
 
 class JoinCommand(EH.EventHandler):
-    TYPE = EH.TEvent.PRIVMSG
-    COMMAND = AwareCommand("-","join", requirements=[cmdPERMISSION.HOST,cmdPERMISSION.SUPERUSER])
-    @classmethod
-    def Execute(cls, ref, *message):
+	TYPE = EH.TEvent.PRIVMSG
+	COMMAND = AwareCommand("-","join", requirements=[cmdPERMISSION.HOST,cmdPERMISSION.SUPERUSER])
+	@classmethod
+	def Execute(cls, ref, *message):
 
-        if cls.COMMAND.Test(message[1]):
-            ref.Join(message[1].GetMessage().split(" ",2)[1])
+		if cls.COMMAND.Test(message[1]):
+			ref.Join(message[1].GetMessage().split(" ",2)[1])
 			
 			with open("config/channels.txt", 'w') as fout:
 				fout.write("\n".join(ref.channels))
 
 class LeaveCommand(EH.EventHandler):
-    TYPE = EH.TEvent.PRIVMSG
+	TYPE = EH.TEvent.PRIVMSG
 
-    @classmethod
-    def Execute(cls, ref, *message):
-        if message[1].GetMessage().lower().startswith("-leave") and message[1].GetTags().get("display-name").lower() in superUsers:
-            ref.Leave(message[1].GetMessage().split(" ",2)[1])
+	@classmethod
+	def Execute(cls, ref, *message):
+		if message[1].GetMessage().lower().startswith("-leave") and message[1].GetTags().get("display-name").lower() in superUsers:
+			ref.Leave(message[1].GetMessage().split(" ",2)[1])
 		
 			with open("config/channels.txt", 'w') as fout:
 				fout.write("\n".join(ref.channels))
@@ -202,69 +202,69 @@ class CurrentChannels(EH.EventHandler):
 			ref.PrivateMessage(message[1].params[0], ", ".join(ref.channels))
 		
 class JoinLargest(EH.EventHandler):
-    TYPE = EH.TEvent.PRIVMSG
+	TYPE = EH.TEvent.PRIVMSG
 
-    @classmethod
-    def Execute(cls, ref, *message):
-        if message[1].GetMessage().lower().startswith("-joinall") and message[1].GetTags().get("display-name").lower() in superUsers:
-            total = 0
-            channels = requests.get("https://api.twitch.tv/kraken/streams?limit={}".format(int(message[1].GetMessage().split(" ",2)[1]))).json()
-            for i in range(int(message[1].GetMessage().split(" ",2)[1])):
-                ref.Join(channels["streams"][i]["channel"]["display_name"])
-                channel = channels["streams"][i]
-                total += int(channel["viewers"])
-                print("Joining channel {} with {} viewers".format(channel["channel"]["display_name"], channel["viewers"]))
-                if i%10 == 0:
-                    time.sleep(4)
-            print("total {} viewers :",total)
+	@classmethod
+	def Execute(cls, ref, *message):
+		if message[1].GetMessage().lower().startswith("-joinall") and message[1].GetTags().get("display-name").lower() in superUsers:
+			total = 0
+			channels = requests.get("https://api.twitch.tv/kraken/streams?limit={}".format(int(message[1].GetMessage().split(" ",2)[1]))).json()
+			for i in range(int(message[1].GetMessage().split(" ",2)[1])):
+				ref.Join(channels["streams"][i]["channel"]["display_name"])
+				channel = channels["streams"][i]
+				total += int(channel["viewers"])
+				print("Joining channel {} with {} viewers".format(channel["channel"]["display_name"], channel["viewers"]))
+				if i%10 == 0:
+					time.sleep(4)
+			print("total {} viewers :",total)
 
 class TestWhisper(botUnifier.BotCommand):
-    TYPE = EH.TEvent.PRIVMSG
-    COMMAND = Command(":", "whisperme")
+	TYPE = EH.TEvent.PRIVMSG
+	COMMAND = Command(":", "whisperme")
 
-    def Execute(self, ref, *msg):
-        if not self.bHasBeenAdded:
-            raise RuntimeError("This command has not be pre registered")
+	def Execute(self, ref, *msg):
+		if not self.bHasBeenAdded:
+			raise RuntimeError("This command has not be pre registered")
 
-        if not self.COMMAND.Test(msg[1].GetMessage()):
-            return
+		if not self.COMMAND.Test(msg[1].GetMessage()):
+			return
 
-        self.BOT.Whisper(msg[1].GetTags().get("display-name", "bombmask"), "Hello world!")
+		self.BOT.Whisper(msg[1].GetTags().get("display-name", "bombmask"), "Hello world!")
 
 
 if __name__ == '__main__':
-    WebServer = BotWeb.WebServer()
+	WebServer = BotWeb.WebServer()
 
-    m = botUnifier.BotDB()
-    BotWeb.SimpleDBResponder.DATABASETMPLINK = m.dbConn
-    WebServer.MainLoop()
+	m = botUnifier.BotDB()
+	BotWeb.SimpleDBResponder.DATABASETMPLINK = m.dbConn
+	WebServer.MainLoop()
 
-    m.flags["write"] = True
-    cProfile = Profile("TheMaskOfTruth", "config")
-    m.username = cProfile.name
-    m.password = cProfile.password
-    m.pairTwitch = ("irc.twitch.tv", 6667)
+	m.flags["write"] = True
+	cProfile = Profile("TheMaskOfTruth", "config")
+	m.username = cProfile.name
+	m.password = cProfile.password
+	m.pairTwitch = ("irc.twitch.tv", 6667)
 
-    """
-    ["199.9.253.119","199.9.253.120", "10.1.222.247","192.16.64.213",
-    "192.16.64.182", "199.9.255.149", "192.16.64.173", "199.9.255.148",
-    "192.16.64.181", "199.9.255.146", "92.16.64.214", "199.9.255.147"]
-    """
+	"""
+	["199.9.253.119","199.9.253.120", "10.1.222.247","192.16.64.213",
+	"192.16.64.182", "199.9.255.149", "192.16.64.173", "199.9.255.148",
+	"192.16.64.181", "199.9.255.146", "92.16.64.214", "199.9.255.147"]
+	"""
 
-    m.pairWhisper = ("199.9.253.119", 6667)
+	m.pairWhisper = ("199.9.253.119", 6667)
 
-    m.tagsAll = ["twitch.tv/tags", "twitch.tv/commands"]
+	m.tagsAll = ["twitch.tv/tags", "twitch.tv/commands"]
 
-    m.twitchLink.RegisterClass(JoinCommand)
-    m.twitchLink.RegisterClass(LeaveCommand)
+	m.twitchLink.RegisterClass(JoinCommand)
+	m.twitchLink.RegisterClass(LeaveCommand)
 	m.twitchLink.RegisterClass(CurrentChannels)
 	
-    m.Register(KappaCommand)
-    m.Register(BasicBanEvent)
+	m.Register(KappaCommand)
+	m.Register(BasicBanEvent)
 
-    m.Start()
+	m.Start()
 
-    m.twitchLink.Join(cProfile.name)
+	m.twitchLink.Join(cProfile.name)
 	try:
 		with open("config/channels.txt") as fin:
 			for channel in fin:
@@ -274,12 +274,12 @@ if __name__ == '__main__':
 	except:
 		print("Channels.txt probably doesn't exist")
 		
-    m.whisperLink.MainLoop(fork=True)
+	m.whisperLink.MainLoop(fork=True)
 
-    try:
-       m.twitchLink.MainLoop()
+	try:
+	   m.twitchLink.MainLoop()
 
-    except KeyboardInterrupt as E:
-        pass
+	except KeyboardInterrupt as E:
+		pass
 
-    m.Stop()
+	m.Stop()
