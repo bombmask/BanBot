@@ -175,7 +175,7 @@ class JoinCommand(EH.EventHandler):
 	def Execute(cls, ref, *message):
 
 		if cls.COMMAND.Test(message[1]):
-			ref.Join(message[1].GetMessage().split(" ",2)[1])
+			ref.Join(message[1].GetMessage().split(" ",2)[1].strip("\r\n"))
 			
 			with open("config/channels.txt", 'w') as fout:
 				fout.write("\n".join(ref.channels))
@@ -186,7 +186,7 @@ class LeaveCommand(EH.EventHandler):
 	@classmethod
 	def Execute(cls, ref, *message):
 		if message[1].GetMessage().lower().startswith("-leave") and message[1].GetTags().get("display-name").lower() in superUsers:
-			ref.Leave(message[1].GetMessage().split(" ",2)[1])
+			ref.Leave(message[1].GetMessage().split(" ",2)[1].strip("\r\n"))
 		
 			with open("config/channels.txt", 'w') as fout:
 				fout.write("\n".join(ref.channels))
