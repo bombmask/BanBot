@@ -185,6 +185,15 @@ class LeaveCommand(EH.EventHandler):
         if message[1].GetMessage().lower().startswith("-leave") and message[1].GetTags().get("display-name").lower() in superUsers:
             ref.Leave(message[1].GetMessage().split(" ",2)[1])
 
+class CurrentChannels(EH.EventHandler):
+	TYPE = EH.TEvent.PRIVMSG
+	COMMAND = AwareCommand("-","allchannels", requirements=[cmdPERMISSION.SUPERUSER])
+	
+	@classmethod
+	def Execute(cls, ref, *message):
+		if cls.COMMAND.Test(message[1]):
+			ref.PrivateMessage(message[1].params[0], ", ".join(ref.channels))
+		
 class JoinLargest(EH.EventHandler):
     TYPE = EH.TEvent.PRIVMSG
 
