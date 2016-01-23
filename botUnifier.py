@@ -24,10 +24,10 @@ class printAll(BotCommand):
 
 
     def Execute(self, ref, *message):
-		try:
-			print(message[1].GetRaw())
-		except:
-			print("UnicodeDecodeError")
+        try:
+            print(message[1].GetRaw())
+        except:
+            print("UnicodeDecodeError")
 
 class logDBAll(BotCommand):
     TYPE = EH.TEvent.ALL
