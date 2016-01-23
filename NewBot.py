@@ -176,6 +176,9 @@ class JoinCommand(EH.EventHandler):
 
         if cls.COMMAND.Test(message[1]):
             ref.Join(message[1].GetMessage().split(" ",2)[1])
+			
+			with open("config/channels.txt", 'w') as fout:
+				fout.write("\n".join(ref.channels))
 
 class LeaveCommand(EH.EventHandler):
     TYPE = EH.TEvent.PRIVMSG
@@ -184,6 +187,10 @@ class LeaveCommand(EH.EventHandler):
     def Execute(cls, ref, *message):
         if message[1].GetMessage().lower().startswith("-leave") and message[1].GetTags().get("display-name").lower() in superUsers:
             ref.Leave(message[1].GetMessage().split(" ",2)[1])
+		
+			with open("config/channels.txt", 'w') as fout:
+				fout.write("\n".join(ref.channels))
+				
 
 class CurrentChannels(EH.EventHandler):
 	TYPE = EH.TEvent.PRIVMSG
@@ -250,14 +257,23 @@ if __name__ == '__main__':
 
     m.twitchLink.RegisterClass(JoinCommand)
     m.twitchLink.RegisterClass(LeaveCommand)
-
+	m.twitchLink.RegisterClass(CurrentChannels)
+	
     m.Register(KappaCommand)
     m.Register(BasicBanEvent)
 
     m.Start()
 
     m.twitchLink.Join(cProfile.name)
-
+	try:
+		with open("config/channels.txt") as fin:
+			for channel in fin:
+				print("Joining Channel: "+channel)
+				m.twitchLink.Join(channel)
+				
+	except:
+		print("Channels.txt probably doesn't exist")
+		
     m.whisperLink.MainLoop(fork=True)
 
     try:
