@@ -264,7 +264,7 @@ if __name__ == '__main__':
 
 	m.Start()
 
-	m.twitchLink.Join(cProfile.name)
+	#m.twitchLink.Join(cProfile.name)
 	try:
 		with open("config/channels.txt") as fin:
 			for channel in fin:
