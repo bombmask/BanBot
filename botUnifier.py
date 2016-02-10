@@ -122,7 +122,7 @@ class BotDB(BotBase):
         print("Current SQLite Version: ", sql.sqlite_version)
 
         self.Register(logDBAll)
-        self.Register(printAll)
+        #self.Register(printAll)
 
     def Load(self):
         pass
