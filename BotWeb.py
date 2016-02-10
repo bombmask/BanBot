@@ -56,8 +56,14 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
             c = s.GetDatabaseCursor()
             cc = s.GetDatabaseCursor()
 
-            print(user.lower(), type(user.lower), type(user))
-            c.execute("SELECT Time, Channel, Message FROM chatdata WHERE user=? ORDER BY Time ASC",(user.lower(),))
+            try:
+                c.execute("SELECT Time, Channel, Message FROM chatdata WHERE user=? ORDER BY Time ASC",(user.lower(),))
+                
+            except Exception, e:
+                print("Exception when quering")
+                print(user.lower(), type(user.lower), type(user))
+                
+
             cc.execute("SELECT Time, Channel FROM bans WHERE user=? ORDER BY Time ASC",(user.lower(),))
 
             userData = {"username":user, "banned":0, "messages":[]}
@@ -67,6 +73,7 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
                 try:
                     userData["messages"].append({"type":"message", "time":message[0], "channel":message[1], "message":message[2]})
                 except Exception as E:
+                    print("Exeption when making dictionary")
                     print(E, len(message), message)
 
             userData["banned"] = len(banData)
