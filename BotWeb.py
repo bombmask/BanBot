@@ -22,8 +22,10 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
         s.end_headers()
         s.wfile.write(B("<html><head><title>404</title></head>"))
         s.wfile.write(B("<body><p>That Page Does Not Exist</p>"))
+
         # If someone went to "http://something.somewhere.net/foo/bar/",
         # then s.path equals "/foo/bar/".
+
         s.wfile.write(B("<p>You accessed path: %s</p>" % s.path))
         s.wfile.write(B("</body></html>"))
 
@@ -54,6 +56,7 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
             c = s.GetDatabaseCursor()
             cc = s.GetDatabaseCursor()
 
+            print(user.lower(), type(user.lower), type(user))
             c.execute("SELECT Time, Channel, Message FROM chatdata WHERE user=? ORDER BY Time ASC",(user.lower(),))
             cc.execute("SELECT Time, Channel FROM bans WHERE user=? ORDER BY Time ASC",(user.lower(),))
 
@@ -61,7 +64,10 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
             banData = cc.fetchall()
 
             for message in c.fetchall():
-                userData["messages"].append({"type":"message", "time":message[0], "channel":message[1], "message":message[2]})
+                try:
+                    userData["messages"].append({"type":"message", "time":message[0], "channel":message[1], "message":message[2]})
+                except Exception as E:
+                    print(E, len(message), message)
 
             userData["banned"] = len(banData)
             for ban in banData:
