@@ -56,12 +56,12 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
             c = s.GetDatabaseCursor()
             cc = s.GetDatabaseCursor()
 
+            print(user.lower(), type(user.lower), type(user))
             try:
                 c.execute("SELECT Time, Channel, Message FROM chatdata WHERE user=? ORDER BY Time ASC",(user.lower(),))
                 
             except Exception as e:
                 print("Exception when quering")
-                print(user.lower(), type(user.lower), type(user))
                 
 
             cc.execute("SELECT Time, Channel FROM bans WHERE user=? ORDER BY Time ASC",(user.lower(),))
