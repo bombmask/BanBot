@@ -59,7 +59,7 @@ class SimpleDBResponder(http.BaseHTTPRequestHandler):
             try:
                 c.execute("SELECT Time, Channel, Message FROM chatdata WHERE user=? ORDER BY Time ASC",(user.lower(),))
                 
-            except Exception, e:
+            except Exception as e:
                 print("Exception when quering")
                 print(user.lower(), type(user.lower), type(user))
                 
