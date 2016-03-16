@@ -243,7 +243,7 @@ if __name__ == '__main__':
 	cProfile = Profile("TheMaskOfTruth", "config")
 	m.username = cProfile.name
 	m.password = cProfile.password
-	m.pairTwitch = ("irc.twitch.tv", 6667)
+	m.pairTwitch = ("irc.chat.twitch.tv", 80)
 
 	"""
 	["199.9.253.119","199.9.253.120", "10.1.222.247","192.16.64.213",
