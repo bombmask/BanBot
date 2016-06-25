@@ -7,7 +7,6 @@ import datetime
 import json
 import requests
 import time
-import BotWeb
 import threading
 
 from command import Command, AwareCommand, PERMLEVEL as cmdPERMISSION
@@ -231,13 +230,30 @@ class TestWhisper(botUnifier.BotCommand):
 
 		self.BOT.Whisper(msg[1].GetTags().get("display-name", "bombmask"), "Hello world!")
 
+class LinkCheck(EH.EventHandler):
+	"""docstring for LinkCheck"""
 
+	TYPE = EH.TEvent.PRIVMSG
+	COMMAND = AwareCommand("-", "link", requirements=[cmdPERMISSION.SUPERUSER, cmdPERMISSION.MOD, cmdPERMISSION.HOST])
+
+	@classmethod
+	def Execute(cls, ref, *message):
+		# Saftey check
+		if not cls.COMMAND.Test(message[1]):
+			return
+
+	@classmethod
+	def Once(cls, ref):
+		CS.ChannelData.LinkCheckEnabled = False
+		
+
+
+		
 if __name__ == '__main__':
-	WebServer = BotWeb.WebServer()
+
 
 	m = botUnifier.BotDB()
-	BotWeb.SimpleDBResponder.DATABASETMPLINK = m.dbConn
-	WebServer.MainLoop()
+
 
 	m.flags["write"] = True
 	cProfile = Profile("TheMaskOfTruth", "config")
