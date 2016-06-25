@@ -1,21 +1,4 @@
 
-import twitchtools.chat.IRC_DB as IRCT
-import twitchtools.chat.EventHandler as EH
-from twitchtools.login.profiles import Profile
-from twitchtools.chat import ChannelStorage as CS
-import datetime
-import json
-import requests
-import time
-import threading
-
-from command import Command, AwareCommand, PERMLEVEL as cmdPERMISSION
-import botUnifier
-# Example classes
-
-
-superUsers = ["bomb_mask"]
-
 
 class BasicBanEvent(botUnifier.BotCommand):
 	TYPE = EH.TEvent.CLEARCHAT
